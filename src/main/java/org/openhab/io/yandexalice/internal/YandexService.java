@@ -18,6 +18,7 @@ import java.util.Set;
 
 import javax.servlet.ServletException;
 
+import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jetty.client.HttpClient;
 import org.json.JSONArray;
@@ -29,6 +30,7 @@ import org.openhab.core.events.EventPublisher;
 import org.openhab.core.events.EventSubscriber;
 import org.openhab.core.io.net.http.HttpClientFactory;
 import org.openhab.core.items.Item;
+import org.openhab.core.items.ItemNotFoundException;
 import org.openhab.core.items.ItemRegistry;
 import org.openhab.core.items.events.ItemStateEvent;
 import org.osgi.framework.BundleContext;
@@ -44,27 +46,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class starts the cloud connection service and implements interface to communicate with the cloud.
+ * This class starts communication between openhab and yandex.
  *
- * @author Victor Belov - Initial contribution
- * @author Kai Kreuzer - migrated code to new Jetty client and ESH APIs
+ * @author Petr Shatsillo - Initial contribution
+ *
  */
 @Component(service = { YandexService.class,
         EventSubscriber.class }, configurationPid = "org.openhab.yandexalice", property = Constants.SERVICE_PID
                 + "=org.openhab.yandexalice")
 @ConfigurableService(category = "io", label = "Yandex Alice", description_uri = YandexService.CONFIG_URI)
 public class YandexService implements EventSubscriber {
-
     protected static final String CONFIG_URI = "io:yandexalice";
-
     private static final String CFG_TOKEN = "token";
-
-    private final Logger logger = LoggerFactory.getLogger(YandexService.class);
-
+    private static Logger logger = LoggerFactory.getLogger(YandexService.class);
     private final HttpClient httpClient;
     protected static ItemRegistry itemRegistry;
     protected final EventPublisher eventPublisher;
-
     private @NonNullByDefault({}) YandexAliceCallbackServlet yandexHTTPCallback;
     private final HttpService httpService;
 
@@ -121,14 +118,120 @@ public class YandexService implements EventSubscriber {
     public void receive(Event event) {
     }
 
-    public static void getItemState(String json) {
-        JSONObject parseItem = new JSONObject(json);
-        JSONArray dev = (JSONArray) parseItem.get("devices");
-        String itemID = dev.getString(0);
+    public static String getItemState(String json, String header) {
+        JSONObject answer = new JSONObject();
+        try {
+            JSONObject parseItem = new JSONObject(json);
+            JSONArray dev = (JSONArray) parseItem.get("devices");
+            JSONObject itemID = dev.getJSONObject(0);
+            Item item = itemRegistry.getItem(itemID.getString("id"));
+            logger.debug("Getting item {} state", item.getName());
+            JSONObject payload = new JSONObject();
+            JSONArray devices = new JSONArray();
+            answer.put("payload", payload);
+            answer.put("request_id", header);
+            JSONObject itemJson = new JSONObject();
+            itemJson.put("id", item.getName());
+            itemJson.put("capabilities", getCapabilitiesState(item));
+            devices.put(itemJson);
+            payload.put("devices", devices);
+        } catch (ItemNotFoundException e) {
+            logger.debug("Error get item {} state", e.getLocalizedMessage());
+        }
+        return answer.toString();
     }
 
-    public static String getItemsList(String header) {
+    public static @NonNull String getItemsList(String header) {
+        JSONObject response = new JSONObject();
+        JSONObject payload = new JSONObject();
+        JSONArray devices = new JSONArray();
+        payload.put("user_id", "1");
+        response.put("payload", payload);
+        response.put("request_id", header);
         Collection<Item> itemsList = itemRegistry.getItems();
-        return "";
+        for (Item item : itemsList) {
+            if (item.hasTag("yndx")) {
+                JSONObject itemJson = new JSONObject();
+                itemJson.put("id", item.getName());
+                itemJson.put("name", item.getLabel());
+                if (item.getType().equals("Switch") && item.hasTag("Lightbulb")) {
+                    JSONArray capabilitiesArray = new JSONArray();
+                    JSONObject capabilitiesObj = new JSONObject();
+                    capabilitiesObj.put("type", "devices.capabilities.on_off");
+                    capabilitiesObj.put("retrievable", true);
+                    capabilitiesObj.put("reportable", true);
+                    capabilitiesArray.put(capabilitiesObj);
+                    itemJson.put("type", "devices.types.light");
+                    itemJson.put("capabilities", capabilitiesArray);
+                } else if (item.getType().equals("Switch") && item.hasTag("RadiatorControl")) {
+                    JSONArray capabilitiesArray = new JSONArray();
+                    JSONObject capabilitiesObj = new JSONObject();
+                    capabilitiesObj.put("type", "devices.capabilities.on_off");
+                    capabilitiesObj.put("retrievable", true);
+                    capabilitiesObj.put("reportable", true);
+                    capabilitiesArray.put(capabilitiesObj);
+                    itemJson.put("type", "devices.types.thermostat");
+                    itemJson.put("capabilities", capabilitiesArray);
+                }
+                devices.put(itemJson);
+                payload.put("devices", devices);
+            }
+            logger.debug("item name {} and tags: {}", item.getName(), item.getTags().toString());
+        }
+        String answer = "";
+        answer = response.toString();
+        logger.debug("Items list response: {}", answer);
+        return answer;
+    }
+
+    private static JSONArray getCapabilitiesState(Item item) {
+        JSONObject itemJson = new JSONObject();
+        JSONObject state = new JSONObject();
+        JSONArray capabilitiesArray = new JSONArray();
+        if (item.getType().equals("Switch") && item.hasTag("Lightbulb")) {
+
+            JSONObject capabilitiesObj = new JSONObject();
+            capabilitiesObj.put("type", "devices.capabilities.on_off");
+            state.put("instance", "on");
+            if (item.getState().toString().equals("ON")) {
+                state.put("value", true);
+            } else {
+                state.put("value", false);
+            }
+            capabilitiesObj.put("state", state);
+            capabilitiesArray.put(capabilitiesObj);
+            itemJson.put("capabilities", capabilitiesArray);
+        } else if (item.getType().equals("Switch") && item.hasTag("RadiatorControl")) {
+            JSONObject capabilitiesObj = new JSONObject();
+            capabilitiesObj.put("type", "devices.capabilities.on_off");
+            state.put("instance", "on");
+            if (item.getState().toString().equals("ON")) {
+                state.put("value", true);
+            } else {
+                state.put("value", false);
+            }
+            capabilitiesObj.put("state", state);
+            capabilitiesArray.put(capabilitiesObj);
+            itemJson.put("capabilities", capabilitiesArray);
+        }
+        return capabilitiesArray;
+    }
+
+    public static String setItemState(String json, String header) {
+        JSONObject answer = new JSONObject();
+        try {
+            JSONArray parseItem = new JSONObject(json).getJSONObject("payload").getJSONArray("devices");
+            JSONObject dev = parseItem.getJSONObject(0);
+            String id = dev.getString("id");
+            JSONArray capabilities = dev.getJSONArray("capabilities");
+            JSONObject state = capabilities.getJSONObject(0).getJSONObject("state");
+            boolean value = state.getBoolean("value");
+            logger.debug("Parsing finish");// .getJSONArray(0).getJSONObject(0)
+            // .getJSONArray("state").getJSONObject(1).getJSONObject("value");
+        } catch (Exception e) {
+            logger.debug("Error get item {}", e.getLocalizedMessage());
+        }
+        String result = "";
+        return result;
     }
 }
