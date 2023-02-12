@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.yandexalice.internal;
+package org.openhab.io.yandexalice.internal;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,11 +30,6 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
 /**
  * The {@link YandexAliceCallbackServlet} is responsible for creating things and thing
  * handlers.
@@ -52,59 +47,63 @@ public class YandexAliceCallbackServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         logger.debug("Get servlet: {}", req.getPathInfo());
-
-        HttpURLConnection con;
-        URL megaURL = new URL(
-                "http://localhost:" + System.getProperty("org.osgi.service.http.port") + "/rest/items?recursive=false");
-        con = (HttpURLConnection) megaURL.openConnection();
-        con.setRequestMethod("GET");
-
-        con.setRequestProperty("Authorization", "Bearer "
-                + "oh.admin.plTrWNSGx4VzY1McJSd8DItg3B8mvuP8sAb7SLYLD1ha25XRhDjgCMKFkLDhWcLHwM8JMlJbyMpaRBmKyGw");
-        con.setRequestProperty("accept", "application/json");
-        logger.debug("Response: {}", con.getResponseMessage());
-        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        String inputLine;
-        StringBuilder response = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-        }
-        in.close();
-        String result = response.toString().trim();
-        logger.debug("input string from REST: {}", result);
-        con.disconnect();
-        JsonParser parser = new JsonParser();
-        JsonElement jsonElement = parser.parse(result);
-        // JsonObject rootObject = jsonElement.getAsJsonObject();
-        JsonArray itemslist = jsonElement.getAsJsonArray();
-        JsonArray yandexList = new JsonArray();
-        for (JsonElement itemslistO : itemslist) {
-            JsonObject rootObject = itemslistO.getAsJsonObject();
-            JsonArray tags = rootObject.getAsJsonArray("tags");
-            for (JsonElement tag : tags) {
-                String tg = tag.getAsString();
-                if (tg.equals("yndx")) {
-                    yandexList.add(rootObject);
-                }
-            }
-            logger.debug("json {}", rootObject.toString());
-        }
-        JsonObject devList = new JsonObject();
-        JsonObject payload = new JsonObject();
-        payload.addProperty("user_id", "1");
-        payload.add("devices", yandexList);
-        devList.addProperty("request_id", req.getHeader("X-Request-Id"));
-        devList.add("payload", payload);
+        //
+        // HttpURLConnection con;
+        // URL megaURL = new URL(
+        // "http://localhost:" + System.getProperty("org.osgi.service.http.port") + "/rest/items?recursive=false");
+        // con = (HttpURLConnection) megaURL.openConnection();
+        // con.setRequestMethod("GET");
+        //
+        // con.setRequestProperty("Authorization", "Bearer "
+        // + "oh.admin.plTrWNSGx4VzY1McJSd8DItg3B8mvuP8sAb7SLYLD1ha25XRhDjgCMKFkLDhWcLHwM8JMlJbyMpaRBmKyGw");
+        // con.setRequestProperty("accept", "application/json");
+        // logger.debug("Response: {}", con.getResponseMessage());
+        // BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+        // String inputLine;
+        // StringBuilder response = new StringBuilder();
+        // while ((inputLine = in.readLine()) != null) {
+        // response.append(inputLine);
+        // }
+        // in.close();
+        // String result = response.toString().trim();
+        // logger.debug("input string from REST: {}", result);
+        // con.disconnect();
+        // JsonParser parser = new JsonParser();
+        // JsonElement jsonElement = parser.parse(result);
+        // // JsonObject rootObject = jsonElement.getAsJsonObject();
+        // JsonArray itemslist = jsonElement.getAsJsonArray();
+        // JsonArray yandexList = new JsonArray();
+        // for (JsonElement itemslistO : itemslist) {
+        // JsonObject rootObject = itemslistO.getAsJsonObject();
+        // JsonArray tags = rootObject.getAsJsonArray("tags");
+        // for (JsonElement tag : tags) {
+        // String tg = tag.getAsString();
+        // if (tg.equals("yndx")) {
+        // yandexList.add(rootObject);
+        // }
+        // }
+        // logger.debug("json {}", rootObject.toString());
+        // }
+        // JsonObject devList = new JsonObject();
+        // JsonObject payload = new JsonObject();
+        // payload.addProperty("user_id", "1");
+        // payload.add("devices", yandexList);
+        // devList.addProperty("request_id", req.getHeader("X-Request-Id"));
+        // devList.add("payload", payload);
         resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding("utf-8");
-        logger.debug("X-Request-Id: {}", req.getHeader("X-Request-Id"));
-        String responseJSON = "{\"request_id\":\" " + req.getHeader("X-Request-Id")
-        // + ", \"payload\": {\"user_id\":\"63db985b4f99a7559623ff03\", \"devices\":[]}}";
-                + "\", \"payload\": {\"user_id\":\"63db985b4f99a7559623ff03\", \"devices\":[{\"id\": \"abc-123\",\"name\":\"лампa\",\"type\": \"devices.types.light\", \"capabilities\": [{\"type\": \"devices.capabilities.on_off\", \"retrievable\": true, \"reportable\": true}], \"properties\": []}, {\"id\": \"abc-321\",\"name\":\"лампa\",\"type\": \"devices.types.light\", \"capabilities\": [{\"type\": \"devices.capabilities.on_off\", \"retrievable\": true, \"reportable\": true}], \"properties\": []}]}}";
-        // resp.setContentLength(responseJSON.length() + 4);
-        resp.getWriter().print(responseJSON);
+        // logger.debug("X-Request-Id: {}", req.getHeader("X-Request-Id"));
+        // String responseJSON = "{\"request_id\":\" " + req.getHeader("X-Request-Id")
+        // // + ", \"payload\": {\"user_id\":\"63db985b4f99a7559623ff03\", \"devices\":[]}}";
+        // + "\", \"payload\": {\"user_id\":\"63db985b4f99a7559623ff03\", \"devices\":[{\"id\":
+        // \"abc-123\",\"name\":\"лампa\",\"type\": \"devices.types.light\", \"capabilities\": [{\"type\":
+        // \"devices.capabilities.on_off\", \"retrievable\": true, \"reportable\": true}], \"properties\": []}, {\"id\":
+        // \"abc-321\",\"name\":\"лампa\",\"type\": \"devices.types.light\", \"capabilities\": [{\"type\":
+        // \"devices.capabilities.on_off\", \"retrievable\": true, \"reportable\": true}], \"properties\": []}]}}";
+        // // resp.setContentLength(responseJSON.length() + 4);
+        resp.getWriter().print(YandexService.getItemsList(req.getHeader("X-Request-Id")));
         resp.setStatus(HttpServletResponse.SC_OK);
-        logger.debug("response: {}", responseJSON);
+        logger.debug("response: {}", YandexService.getItemsList(req.getHeader("X-Request-Id")));
         // super.doGet(req, resp);
     }
 
@@ -145,5 +144,10 @@ public class YandexAliceCallbackServlet extends HttpServlet {
         // }
         // con.disconnect();
         logger.debug("POST request from Yandex: {}", body);
+
+        if (req.getRequestURI().equals("/yandex/v1.0/user/devices/query")) {
+            logger.debug("Requesting item state from Yandex: {}", body);
+            YandexService.getItemState(body);
+        }
     }
 }

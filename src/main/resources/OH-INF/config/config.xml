@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config-description:config-descriptions
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:config-description="https://openhab.org/schemas/config-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/config-description/v1.0.0
+		https://openhab.org/schemas/config-description-1.0.0.xsd">
+	<config-description uri="io:yandexalice">
+		<parameter name="token" type="text" required="false">
+			<label>Yandex token</label>
+			<description>You can get it at
+				https://oauth.yandex.ru/authorize?response_type=token&amp;client_id=583d146e210a4f07945657f782dae092</description>
+		</parameter>
+	</config-description>
+</config-description:config-descriptions>
