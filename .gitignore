@@ -6,3 +6,7 @@ src/main/history/dependencies.xml
 .idea/org.openhab.io.yandexalice.iml
 .idea/vcs.xml
 .idea/workspace.xml
+.idea/compiler.xml
+.idea/compiler.xml
+.idea/jpa-buddy.xml
+.idea/misc.xml

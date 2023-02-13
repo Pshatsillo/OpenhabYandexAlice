@@ -17,10 +17,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.servlet.ServletException;
 
@@ -73,6 +70,7 @@ public class YandexService implements EventSubscriber {
     protected static EventPublisher eventPublisher;
     private @NonNullByDefault({}) YandexAliceCallbackServlet yandexHTTPCallback;
     private final HttpService httpService;
+    private final HashMap<String, String> yandexId = new HashMap<>();
 
     private String yandexToken;
 
@@ -91,6 +89,42 @@ public class YandexService implements EventSubscriber {
         this.eventPublisher = eventPublisher;
     }
 
+    private void getInfoFromYandex() {
+        HttpURLConnection con;
+        URL yandexURL = null;
+        try {
+            yandexURL = new URL("https://api.iot.yandex.net/v1.0/user/info");
+            con = (HttpURLConnection) yandexURL.openConnection();
+            con.setRequestMethod("GET");
+            con.setRequestProperty("Authorization", "Bearer " + yandexToken);
+            con.setRequestProperty("Content-Type", "application/json");
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            String result = response.toString().trim();
+            // logger.debug("input string from REST: {}", result);
+            con.disconnect();
+            JSONObject yandexResponse = new JSONObject(result);
+            JSONArray devices = yandexResponse.getJSONArray("devices");
+            for (Object dev : devices) {
+                JSONObject device = (JSONObject) dev;
+                String id = device.get("id").toString();
+                String external_id = device.get("external_id").toString();
+                Item itm = itemRegistry.get(external_id);
+                if (itemRegistry.get(external_id) != null) {
+                    yandexId.put(external_id, id);
+                }
+            }
+
+        } catch (Exception e) {
+            logger.debug("getInfoFromYandex error {}", e.getLocalizedMessage());
+        }
+    }
+
     @Activate
     protected void activate(BundleContext context, Map<String, ?> config) {
         logger.warn("Activate Config is {}", config);
@@ -103,6 +137,7 @@ public class YandexService implements EventSubscriber {
                     this.httpService.createDefaultHttpContext());
         } catch (ServletException | NamespaceException ignored) {
         }
+        getInfoFromYandex();
     }
 
     @Deactivate
@@ -139,7 +174,7 @@ public class YandexService implements EventSubscriber {
         String name = ise.getItemName();
         State state = ise.getItemState();
         boolean stateBool;
-        if (state.equals("ON")) {
+        if (state.toString().equals("ON")) {
             stateBool = true;
         } else {
             stateBool = false;
@@ -158,13 +193,14 @@ public class YandexService implements EventSubscriber {
             con.setDoOutput(true);
             JSONObject requestObj = new JSONObject();
             JSONArray devices = new JSONArray();
-            devices.put(new JSONObject().put("id", name).put("actions",
+            devices.put(new JSONObject().put("id", yandexId.get(name)).put("actions",
                     new JSONArray().put(new JSONObject().put("type", "devices.capabilities.on_off").put("state",
                             new JSONObject().put("instance", "on").put("value", stateBool)))));
             requestObj.put("devices", devices);
-            String answer = "{\"devices\":[{\"id\": \"LightItemTestName\",\"actions\":[{\"type\": \"devices.capabilities.on_off\",\"state\":{\"instance\": \"on\",\"value\": true}}]}]}";
+            String answer = "{\"devices\":[{\"id\": \"" + yandexId.get(name)
+                    + "\",\"actions\":[{\"type\": \"devices.capabilities.on_off\",\"state\":{\"instance\": \"on\",\"value\": true}}]}]}";
             try (OutputStream os = con.getOutputStream()) {
-                byte[] input = answer.getBytes("UTF-8");
+                byte[] input = requestObj.toString().getBytes("UTF-8");
                 os.write(input, 0, input.length);
             }
 
@@ -187,7 +223,6 @@ public class YandexService implements EventSubscriber {
 
             logger.debug("state changed");
         } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
