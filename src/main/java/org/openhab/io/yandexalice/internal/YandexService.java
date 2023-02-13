@@ -12,7 +12,13 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,6 +41,7 @@ import org.openhab.core.items.ItemRegistry;
 import org.openhab.core.items.events.ItemEventFactory;
 import org.openhab.core.items.events.ItemStateEvent;
 import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.types.State;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
@@ -67,6 +74,8 @@ public class YandexService implements EventSubscriber {
     private @NonNullByDefault({}) YandexAliceCallbackServlet yandexHTTPCallback;
     private final HttpService httpService;
 
+    private String yandexToken;
+
     @Activate
     public YandexService(final @Reference HttpClientFactory httpClientFactory,
             final @Reference ItemRegistry itemRegistry, final @Reference EventPublisher eventPublisher,
@@ -84,6 +93,10 @@ public class YandexService implements EventSubscriber {
 
     @Activate
     protected void activate(BundleContext context, Map<String, ?> config) {
+        logger.warn("Activate Config is {}", config);
+        if (config != null && config.get(CFG_TOKEN) != null) {
+            yandexToken = config.get(CFG_TOKEN).toString();
+        }
         try {
             yandexHTTPCallback = new YandexAliceCallbackServlet();
             this.httpService.registerServlet("/yandex", yandexHTTPCallback, null,
@@ -104,6 +117,10 @@ public class YandexService implements EventSubscriber {
 
     @Modified
     protected void modified(Map<String, ?> config) {
+        logger.warn("modified Config is {}", config);
+        if (config != null && config.get(CFG_TOKEN) != null) {
+            yandexToken = config.get(CFG_TOKEN).toString();
+        }
     }
 
     @Override
@@ -118,6 +135,60 @@ public class YandexService implements EventSubscriber {
 
     @Override
     public void receive(Event event) {
+        ItemStateEvent ise = (ItemStateEvent) event;
+        String name = ise.getItemName();
+        State state = ise.getItemState();
+        boolean stateBool;
+        if (state.equals("ON")) {
+            stateBool = true;
+        } else {
+            stateBool = false;
+        }
+
+        // https://api.iot.yandex.net/v1.0/devices/actions
+        HttpURLConnection con;
+        URL yandexURL = null;
+        try {
+            yandexURL = new URL("https://api.iot.yandex.net/v1.0/devices/actions");
+
+            con = (HttpURLConnection) yandexURL.openConnection();
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "Bearer " + yandexToken);
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+            JSONObject requestObj = new JSONObject();
+            JSONArray devices = new JSONArray();
+            devices.put(new JSONObject().put("id", name).put("actions",
+                    new JSONArray().put(new JSONObject().put("type", "devices.capabilities.on_off").put("state",
+                            new JSONObject().put("instance", "on").put("value", stateBool)))));
+            requestObj.put("devices", devices);
+            String answer = "{\"devices\":[{\"id\": \"LightItemTestName\",\"actions\":[{\"type\": \"devices.capabilities.on_off\",\"state\":{\"instance\": \"on\",\"value\": true}}]}]}";
+            try (OutputStream os = con.getOutputStream()) {
+                byte[] input = answer.getBytes("UTF-8");
+                os.write(input, 0, input.length);
+            }
+
+            int code = con.getResponseCode();
+            Map<String, List<String>> headers = con.getHeaderFields();
+            // if (con.getResponseCode() == 200) {
+            // logger.debug("OK");
+            logger.debug("Response: {}", con.getResponseMessage());
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            String result = response.toString().trim();
+            logger.debug("input string from REST: {}", result);
+            // }
+            con.disconnect();
+
+            logger.debug("state changed");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getItemState(String json, String header) {
