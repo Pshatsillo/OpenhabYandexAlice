@@ -10,13 +10,9 @@
         <module name="org.openhab.io.yandexalice" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="org.openhab.io.openhabcloud" target="11" />
-    </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="org.openhab.io.openhabcloud" options="-annotationpath CLASSPATH -classpath E:\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/dependency &quot;-err:+nullAnnot(org.eclipse.jdt.annotation.Nullable|org.eclipse.jdt.annotation.NonNull|org.eclipse.jdt.annotation.NonNullByDefault),+inheritNullAnnot,+nullAnnotConflict,-nullUncheckedConversion&quot; -warn:+null,+inheritNullAnnot,-nullUncheckedConversion,+nullAnnotRedundant,+nullDereference -nowarn:[E:\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/generated-sources]" />
       <module name="org.openhab.io.yandexalice" options="-annotationpath CLASSPATH -classpath E:\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/dependency &quot;-err:+nullAnnot(org.eclipse.jdt.annotation.Nullable|org.eclipse.jdt.annotation.NonNull|org.eclipse.jdt.annotation.NonNullByDefault),+inheritNullAnnot,+nullAnnotConflict,-nullUncheckedConversion&quot; -warn:+null,+inheritNullAnnot,-nullUncheckedConversion,+nullAnnotRedundant,+nullDereference -nowarn:[E:\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/generated-sources]" />
     </option>
   </component>
