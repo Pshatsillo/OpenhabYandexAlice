@@ -32,7 +32,9 @@ import org.openhab.core.io.net.http.HttpClientFactory;
 import org.openhab.core.items.Item;
 import org.openhab.core.items.ItemNotFoundException;
 import org.openhab.core.items.ItemRegistry;
+import org.openhab.core.items.events.ItemEventFactory;
 import org.openhab.core.items.events.ItemStateEvent;
+import org.openhab.core.library.types.OnOffType;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
@@ -61,7 +63,7 @@ public class YandexService implements EventSubscriber {
     private static Logger logger = LoggerFactory.getLogger(YandexService.class);
     private final HttpClient httpClient;
     protected static ItemRegistry itemRegistry;
-    protected final EventPublisher eventPublisher;
+    protected static EventPublisher eventPublisher;
     private @NonNullByDefault({}) YandexAliceCallbackServlet yandexHTTPCallback;
     private final HttpService httpService;
 
@@ -226,12 +228,43 @@ public class YandexService implements EventSubscriber {
             JSONArray capabilities = dev.getJSONArray("capabilities");
             JSONObject state = capabilities.getJSONObject(0).getJSONObject("state");
             boolean value = state.getBoolean("value");
+            Item item = itemRegistry.getItem(id);
+            if (value) {
+                eventPublisher.post(ItemEventFactory.createCommandEvent(id, OnOffType.ON));
+            } else {
+                eventPublisher.post(ItemEventFactory.createCommandEvent(id, OnOffType.OFF));
+            }
             logger.debug("Parsing finish");// .getJSONArray(0).getJSONObject(0)
-            // .getJSONArray("state").getJSONObject(1).getJSONObject("value");
+
+            JSONObject payload = new JSONObject();
+            JSONArray devices = new JSONArray();
+            answer.put("payload", payload);
+            answer.put("request_id", header);
+            JSONObject itemJson = new JSONObject();
+            itemJson.put("id", item.getName());
+            JSONArray caps = getCapabilitiesState(item, "DONE");
+            itemJson.put("capabilities", caps);
+            devices.put(itemJson);
+            payload.put("devices", devices);
         } catch (Exception e) {
-            logger.debug("Error get item {}", e.getLocalizedMessage());
+            logger.debug("Error get item {} state", e.getLocalizedMessage());
         }
-        String result = "";
-        return result;
+        return answer.toString();
+    }
+
+    private static JSONArray getCapabilitiesState(Item item, String status) {
+        JSONObject itemJson = new JSONObject();
+        JSONObject state = new JSONObject();
+        JSONArray capabilitiesArray = new JSONArray();
+        if (item.getType().equals("Switch")) {
+            JSONObject capabilitiesObj = new JSONObject();
+            capabilitiesObj.put("type", "devices.capabilities.on_off");
+            state.put("instance", "on");
+            state.put("action_result", new JSONObject().put("status", status));
+            capabilitiesObj.put("state", state);
+            capabilitiesArray.put(capabilitiesObj);
+            itemJson.put("capabilities", capabilitiesArray);
+        }
+        return capabilitiesArray;
     }
 }
