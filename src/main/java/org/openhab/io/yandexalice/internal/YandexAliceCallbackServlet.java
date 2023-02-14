@@ -57,31 +57,6 @@ public class YandexAliceCallbackServlet extends HttpServlet {
         HttpURLConnection con;
         logger.debug("POST servlet: {}", req.getRequestURI());
         String body = req.getReader().lines().reduce("", String::concat);
-        // URL megaURL = new URL(
-        // "http://localhost:" + System.getProperty("org.osgi.service.http.port") + "/rest/items?recursive=false");
-        // con = (HttpURLConnection) megaURL.openConnection();
-        // con.setRequestMethod("GET");
-        //
-        // con.setRequestProperty("Authorization", "Bearer "
-        // + "oh.admin.plTrWNSGx4VzY1McJSd8DItg3B8mvuP8sAb7SLYLD1ha25XRhDjgCMKFkLDhWcLHwM8JMlJbyMpaRBmKyGw");
-        // con.setRequestProperty("accept", "application/json");
-        //
-        // Map<String, List<String>> headers = con.getHeaderFields();
-        // // if (con.getResponseCode() == 200) {
-        // // logger.debug("OK");
-        // logger.debug("Response: {}", con.getResponseMessage());
-        // BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-        // String inputLine;
-        // StringBuilder response = new StringBuilder();
-        // while ((inputLine = in.readLine()) != null) {
-        // response.append(inputLine);
-        // }
-        // in.close();
-        // String result = response.toString().trim();
-        // logger.debug("input string from REST: {}", result);
-        // con.disconnect();
-        // }
-        // con.disconnect();
         logger.debug("POST request from Yandex: {}", body);
         String answer = "";
         if (req.getRequestURI().equals("/yandex/v1.0/user/devices/query")) {

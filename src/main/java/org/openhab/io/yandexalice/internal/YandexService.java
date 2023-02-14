@@ -72,7 +72,6 @@ public class YandexService implements EventSubscriber {
     private final HttpService httpService;
     private final HashMap<String, String> yandexId = new HashMap<>();
     private static boolean action;
-
     private String yandexToken;
 
     @Activate
@@ -143,11 +142,9 @@ public class YandexService implements EventSubscriber {
 
     @Deactivate
     protected void deactivate() {
-        // logger.debug("openHAB Cloud connector deactivated");
         try {
             httpClient.stop();
         } catch (Exception e) {
-            // logger.debug("Could not stop Jetty http client", e);
         }
     }
 
@@ -181,7 +178,6 @@ public class YandexService implements EventSubscriber {
             } else {
                 stateBool = false;
             }
-
             // https://api.iot.yandex.net/v1.0/devices/actions
             HttpURLConnection con;
             URL yandexURL = null;
@@ -199,7 +195,6 @@ public class YandexService implements EventSubscriber {
                         new JSONArray().put(new JSONObject().put("type", "devices.capabilities.on_off").put("state",
                                 new JSONObject().put("instance", "on").put("value", stateBool)))));
                 requestObj.put("devices", devices);
-
                 try (OutputStream os = con.getOutputStream()) {
                     byte[] input = requestObj.toString().getBytes("UTF-8");
                     os.write(input, 0, input.length);
@@ -207,7 +202,6 @@ public class YandexService implements EventSubscriber {
 
                 int code = con.getResponseCode();
                 Map<String, List<String>> headers = con.getHeaderFields();
-                // if (con.getResponseCode() == 200) {
                 logger.debug("Event fired");
                 logger.debug("Response: {}", con.getResponseMessage());
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -219,10 +213,6 @@ public class YandexService implements EventSubscriber {
                 in.close();
                 String result = response.toString().trim();
                 logger.debug("input string from REST: {}", result);
-                // }
-                // con.disconnect();
-                //
-                // logger.debug("state changed");
             } catch (Exception e) {
                 logger.debug("ERROR {}", e.getLocalizedMessage());
             }
@@ -302,7 +292,6 @@ public class YandexService implements EventSubscriber {
         JSONObject state = new JSONObject();
         JSONArray capabilitiesArray = new JSONArray();
         if (item.getType().equals("Switch") && item.hasTag("Lightbulb")) {
-
             JSONObject capabilitiesObj = new JSONObject();
             capabilitiesObj.put("type", "devices.capabilities.on_off");
             state.put("instance", "on");
@@ -346,8 +335,7 @@ public class YandexService implements EventSubscriber {
             } else {
                 eventPublisher.post(ItemEventFactory.createCommandEvent(id, OnOffType.OFF));
             }
-            logger.debug("Parsing finish");// .getJSONArray(0).getJSONObject(0)
-
+            logger.debug("Parsing finish");
             JSONObject payload = new JSONObject();
             JSONArray devices = new JSONArray();
             answer.put("payload", payload);
