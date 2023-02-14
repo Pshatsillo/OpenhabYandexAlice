@@ -263,7 +263,7 @@ public class YandexService implements EventSubscriber {
         response.put("request_id", header);
         Collection<Item> itemsList = itemRegistry.getItems();
         for (Item item : itemsList) {
-            if (item.hasTag("yndx")) {
+            if (item.hasTag("Yandex")) {
                 JSONObject itemJson = new JSONObject();
                 itemJson.put("id", item.getName());
                 itemJson.put("name", item.getLabel());
