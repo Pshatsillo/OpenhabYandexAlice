@@ -18,11 +18,15 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 
-import org.eclipse.jdt.annotation.NonNull;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jetty.client.HttpClient;
 import org.json.JSONArray;
@@ -33,6 +37,7 @@ import org.openhab.core.events.EventFilter;
 import org.openhab.core.events.EventPublisher;
 import org.openhab.core.events.EventSubscriber;
 import org.openhab.core.io.net.http.HttpClientFactory;
+import org.openhab.core.items.GroupItem;
 import org.openhab.core.items.Item;
 import org.openhab.core.items.ItemNotFoundException;
 import org.openhab.core.items.ItemRegistry;
@@ -203,7 +208,6 @@ public class YandexService implements EventSubscriber {
 
                 int code = con.getResponseCode();
                 Map<String, List<String>> headers = con.getHeaderFields();
-                logger.debug("Event fired");
                 logger.debug("Response: {}", con.getResponseMessage());
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String inputLine;
@@ -245,47 +249,49 @@ public class YandexService implements EventSubscriber {
         return answer.toString();
     }
 
-    public static @NonNull String getItemsList(String header) {
-        JSONObject response = new JSONObject();
-        JSONObject payload = new JSONObject();
-        JSONArray devices = new JSONArray();
-        payload.put("user_id", "1");
-        response.put("payload", payload);
-        response.put("request_id", header);
+    public static String getItemsList(String header) {
         Collection<Item> itemsList = itemRegistry.getItems();
+        YandexAliceJson json = new YandexAliceJson(header);
+        json.setUserDevices("1");
         for (Item item : itemsList) {
             if (item.hasTag("Yandex")) {
-                JSONObject itemJson = new JSONObject();
-                itemJson.put("id", item.getName());
-                itemJson.put("name", item.getLabel());
-                if (item.getType().equals("Switch") && item.hasTag("Lightbulb")) {
-                    JSONArray capabilitiesArray = new JSONArray();
-                    JSONObject capabilitiesObj = new JSONObject();
-                    capabilitiesObj.put("type", "devices.capabilities.on_off");
-                    capabilitiesObj.put("retrievable", true);
-                    capabilitiesObj.put("reportable", true);
-                    capabilitiesArray.put(capabilitiesObj);
-                    itemJson.put("type", "devices.types.light");
-                    itemJson.put("capabilities", capabilitiesArray);
-                } else if (item.getType().equals("Switch") && item.hasTag("RadiatorControl")) {
-                    JSONArray capabilitiesArray = new JSONArray();
-                    JSONObject capabilitiesObj = new JSONObject();
-                    capabilitiesObj.put("type", "devices.capabilities.on_off");
-                    capabilitiesObj.put("retrievable", true);
-                    capabilitiesObj.put("reportable", true);
-                    capabilitiesArray.put(capabilitiesObj);
-                    itemJson.put("type", "devices.types.thermostat");
-                    itemJson.put("capabilities", capabilitiesArray);
+                if (item.getType().equals("Switch")) {
+                    if (item.hasTag("Lightbulb")) {
+                        json.createDevice(item.getName(), Objects.requireNonNull(item.getLabel()), json.DEV_LIGHT);
+                        json.addCapabilities(json.CAP_ON_OFF, item.getName());
+                    } else if (item.hasTag("PowerOutlet")) {
+                        json.createDevice(item.getName(), Objects.requireNonNull(item.getLabel()), json.DEV_SOCKET);
+                        json.addCapabilities(json.CAP_ON_OFF, item.getName());
+                    } else {
+                        json.createDevice(item.getName(), Objects.requireNonNull(item.getLabel()), json.DEV_SWITCH);
+                        json.addCapabilities(json.CAP_ON_OFF, item.getName());
+                    }
+                } else if (item.getType().equals("Group")) {
+                    logger.debug("It`s a GROUP!");
+                    GroupItem groupItem = (GroupItem) item;
+                    Set<Item> grpMembers = groupItem.getAllMembers();
+                    for (Item grpItem : grpMembers) {
+                        if (grpItem.getType().equals("Switch")) {
+
+                        } else if (grpItem.getType().equals("Number")) {
+                            /*
+                             * {
+                             * "type": "devices.properties.float",
+                             * "retrievable": true,
+                             * "parameters": {
+                             * "instance": "pressure",
+                             * "unit": "unit.pressure.bar"
+                             * }
+                             */
+                        }
+                    }
+                    logger.debug("It`s a list {} !", grpMembers);
                 }
-                devices.put(itemJson);
-                payload.put("devices", devices);
             }
-            logger.debug("item name {} and tags: {}", item.getName(), item.getTags().toString());
         }
         String answer = "";
-        answer = response.toString();
         logger.debug("Items list response: {}", answer);
-        return answer;
+        return json.returnRequest.toString();
     }
 
     private static JSONArray getCapabilitiesState(Item item) {

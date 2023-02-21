@@ -9,15 +9,20 @@
 ### Данный плагин работает только с частными версиями Openhab-cloud!
 
 Инструкция по установке:
+
 1. Получаем доступ к облаку Openhab (или свой, или тот, у кого есть доступ к авторизации через Openhab)
+   
    * [Openhab-cloud](https://github.com/openhab/openhab-cloud)
    * Вносим в MongoDB Openhab запись для авторизации по Oauth 
-  ```
+  
+```
     use openhab
     db.oauth2clients.insert({ clientId: "<CLIENT-ID>", clientSecret: "<CLIENT SECRET>"})
     db.oauth2scopes.insert({ name: "yandex"})
     db.oauth2scopes.insert( { name : "Yandex Alice", description: "Access to openHAB Cloud specific API for Yandex Alice", } )
+ 
   ```
+
   * Запоминаем логин и пароль <CLIENT-ID> - <CLIENT SECRET> - scope "yandex"
 
 2. Создаём навык в [Алисе](https://dialogs.yandex.ru/developer/).
@@ -37,8 +42,9 @@
 
 ## Работа с Openhab
 
-1. Добавляем в желаемый Item тэг Yandex, обновляем приложение
+1. Добавляем в желаемый Item Non-Semantic Tags - Yandex, обновляем приложение "Умный дом" Яндекса
 2. Тип устройства определяется по Semantic Class, [Устройства Алисы](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/device-types.html)
+ Простое устройство Switch item, (не в составе группы) выбираем Semantic class:
    * Lightbulb - Лампочка, светильник, ночник, люстра.
-   * RadiatorControl - devices.types.thermostat
-   * Список будет обновляться
+   * PowerOutlet - Розетка
+   * Без класса - Выключатель
