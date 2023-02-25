@@ -25,16 +25,24 @@ import org.slf4j.LoggerFactory;
  */
 @NonNullByDefault
 public class YandexAliceJson {
-    public final String DEV_SOCKET = "devices.types.socket";
-    public final String CAP_ON_OFF = "devices.capabilities.on_off";
-    public final String DEV_SWITCH = "devices.types.switch";
-    public final String DEV_LIGHT = "devices.types.light";
+    public static final String UNIT_TEMP_KELVIN = "unit.temperature.kelvin";
+    public static final String UNIT_TEMP_CELSIUS = "unit.temperature.celsius";
+    public static final String PROP_FLOAT = "devices.properties.float";
+    public static final String DEV_SENSOR = "devices.types.sensor";
+    public static final String DEV_SOCKET = "devices.types.socket";
+    public static final String DEV_SWITCH = "devices.types.switch";
+    public static final String DEV_LIGHT = "devices.types.light";
+    public static final String INS_TEMP = "temperature";
+    public static final String CAP_ON_OFF = "devices.capabilities.on_off";
+
     String requestID;
     JSONObject returnRequest = new JSONObject();
     Logger log = LoggerFactory.getLogger(YandexAliceJson.class);
 
     public YandexAliceJson(String requestID) {
         returnRequest.put("request_id", requestID);
+        returnRequest.put("payload", new JSONObject());
+        returnRequest.getJSONObject("payload").put("devices", new JSONArray());
         this.requestID = requestID;
     }
 
@@ -51,40 +59,58 @@ public class YandexAliceJson {
     public void setDeviceName(String deviceLabel) {
     }
 
-    public void setDeviceID(String tstDevice) {
-        JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
+    public void setDeviceID(YandexDevice yaDevice) {
+        returnRequest.getJSONObject("payload").getJSONArray("devices")
+                .put(new JSONObject().put("id", yaDevice.getId()));
         // log.info("device {}", device);
     }
 
-    public void createDevice(String id, String name, String type) {
+    public void addCapabilities(YandexDevice yaDev) {
+        JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
+        JSONArray caps = new JSONArray();
+        for (YandexAliceCapabilities cp : yaDev.getCapabilities()) {
+            caps.put(new JSONObject().put("type", cp.getCapability()).put("parameters", new JSONObject()));
+        }
+        for (int i = 0; i < device.length(); i++) {
+            String capID = device.getJSONObject(i).get("id").toString();
+            if (capID.equals(yaDev.getId())) {
+                returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(i).put("capabilities",
+                        caps);
+                // log.debug("jsonObject device {}", returnRequest);
+            }
+        }
+    }
+
+    public void addProperties(YandexDevice yaDev) {
+        JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
+        JSONArray properties = new JSONArray();
+        for (YandexAliceProperties prp : yaDev.getProperty()) {
+            properties.put(new JSONObject().put("type", prp.getPropName()).put("parameters",
+                    new JSONObject().put("instance", prp.getInstance()).put("unit", prp.getUnit())));
+        }
+        for (int i = 0; i < device.length(); i++) {
+            String capID = device.getJSONObject(i).get("id").toString();
+            if (capID.equals(yaDev.getId())) {
+                returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(i).put("properties",
+                        properties);
+                log.debug("jsonObject device {}", returnRequest);
+            }
+        }
+    }
+
+    public void createDevice(YandexDevice yDev) {
         JSONObject deviceObj = new JSONObject();
-        deviceObj.put("id", id).put("name", name).put("type", type).put("capabilities", new JSONArray())
-                .put("properties", new JSONArray());
+        deviceObj.put("id", yDev.getId()).put("name", yDev.getName()).put("type", yDev.getType())
+                .put("capabilities", new JSONArray()).put("properties", new JSONArray());
         returnRequest.getJSONObject("payload").getJSONArray("devices").put(deviceObj);
     }
 
-    public void addCapabilities(String capabilityName, String id) {
-        JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
-        for (int i = 0; i < device.length(); i++) {
-            String capID = device.getJSONObject(i).get("id").toString();
-            if (capID.equals(id)) {
-                returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(i)
-                        .getJSONArray("capabilities").put(new JSONObject().put("type", capabilityName));
-                log.debug("jsonObject device {}", returnRequest);
-            }
+    public void addCapability(String capability, String status) {
+        if(status.equals("on")){
+            status = "true";
+        } else if (status.equals("off")) {
+            status = "false";
         }
-    }
 
-    public void addProperties(String propertyName, String id, String instance, String unit) {
-        JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
-        for (int i = 0; i < device.length(); i++) {
-            String capID = device.getJSONObject(i).get("id").toString();
-            if (capID.equals(id)) {
-                returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(i)
-                        .getJSONArray("properties").put(new JSONObject().put("type", propertyName).put("parameters",
-                                new JSONObject().put("instance", instance).put("unit", unit)));
-                log.debug("jsonObject device {}", returnRequest);
-            }
-        }
     }
 }

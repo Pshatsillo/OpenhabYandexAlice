@@ -39,7 +39,6 @@ import org.openhab.core.events.EventSubscriber;
 import org.openhab.core.io.net.http.HttpClientFactory;
 import org.openhab.core.items.GroupItem;
 import org.openhab.core.items.Item;
-import org.openhab.core.items.ItemNotFoundException;
 import org.openhab.core.items.ItemRegistry;
 import org.openhab.core.items.events.ItemEventFactory;
 import org.openhab.core.items.events.ItemStateEvent;
@@ -79,6 +78,7 @@ public class YandexService implements EventSubscriber {
     private final HashMap<String, String> yandexId = new HashMap<>();
     private static boolean action;
     private String yandexToken;
+    private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
 
     @Activate
     public YandexService(final @Reference HttpClientFactory httpClientFactory,
@@ -93,9 +93,17 @@ public class YandexService implements EventSubscriber {
 
         YandexService.itemRegistry = itemRegistry;
         YandexService.eventPublisher = eventPublisher;
+        getItemsList();
+    }
+
+    private void getItemsList() {
+        getItemsList("");
     }
 
     private void getInfoFromYandex() {
+        if (!yandexId.isEmpty()) {
+            yandexId.clear();
+        }
         HttpURLConnection con;
         URL yandexURL = null;
         try {
@@ -174,6 +182,7 @@ public class YandexService implements EventSubscriber {
 
     @Override
     public void receive(Event event) {
+        getInfoFromYandex();
         if (!action) {
             ItemStateEvent ise = (ItemStateEvent) event;
             String name = ise.getItemName();
@@ -227,26 +236,38 @@ public class YandexService implements EventSubscriber {
     }
 
     public static String getItemState(String json, String header) {
-        JSONObject answer = new JSONObject();
+        // JSONObject answer = new JSONObject();
+        YandexAliceJson aliceJson = new YandexAliceJson(header);
         try {
             JSONObject parseItem = new JSONObject(json);
             JSONArray dev = (JSONArray) parseItem.get("devices");
-            JSONObject itemID = dev.getJSONObject(0);
-            Item item = itemRegistry.getItem(itemID.getString("id"));
-            logger.debug("Getting item {} state", item.getName());
-            JSONObject payload = new JSONObject();
-            JSONArray devices = new JSONArray();
-            answer.put("payload", payload);
-            answer.put("request_id", header);
-            JSONObject itemJson = new JSONObject();
-            itemJson.put("id", item.getName());
-            itemJson.put("capabilities", getCapabilitiesState(item));
-            devices.put(itemJson);
-            payload.put("devices", devices);
-        } catch (ItemNotFoundException e) {
+            String itemID = dev.getJSONObject(0).getString("id");
+            YandexDevice yDev = yandexDevicesList.get(itemID);
+            // Item item = itemRegistry.getItem(itemID.getString("id"));
+            logger.debug("Getting item {} state", yDev.getId());
+            aliceJson.setDeviceID(yDev);
+            Item item = itemRegistry.getItem(yDev.getId());
+            if(!item.getType().equals("Group")) {
+                for (YandexAliceCapabilities cap :yDev.getCapabilities()) {
+                    aliceJson.addCapability(cap.getCapability(), item.getState().toString());
+                }
+
+            } else {
+                logger.debug("Construction in progress");
+            }
+            // JSONObject payload = new JSONObject();
+            // JSONArray devices = new JSONArray();
+            // answer.put("payload", payload);
+            // answer.put("request_id", header);
+            // JSONObject itemJson = new JSONObject();
+            // itemJson.put("id", item.getName());
+            // itemJson.put("capabilities", getCapabilitiesState(item));
+            // devices.put(itemJson);
+            // payload.put("devices", devices);
+        } catch (Exception e) {
             logger.debug("Error get item {} state", e.getLocalizedMessage());
         }
-        return answer.toString();
+        return aliceJson.returnRequest.toString();
     }
 
     public static String getItemsList(String header) {
@@ -257,15 +278,41 @@ public class YandexService implements EventSubscriber {
             if (item.hasTag("Yandex")) {
                 if (item.getType().equals("Switch")) {
                     if (item.hasTag("Lightbulb")) {
-                        json.createDevice(item.getName(), Objects.requireNonNull(item.getLabel()), json.DEV_LIGHT);
-                        json.addCapabilities(json.CAP_ON_OFF, item.getName());
+                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                YandexAliceJson.DEV_LIGHT);
+                        yDev.addCapabilities(YandexAliceJson.CAP_ON_OFF);
+                        json.createDevice(yDev);
+                        json.addCapabilities(yDev);
+                        yandexDevicesList.put(item.getName(), yDev);
                     } else if (item.hasTag("PowerOutlet")) {
-                        json.createDevice(item.getName(), Objects.requireNonNull(item.getLabel()), json.DEV_SOCKET);
-                        json.addCapabilities(json.CAP_ON_OFF, item.getName());
+                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                YandexAliceJson.DEV_SOCKET);
+                        yDev.addCapabilities(YandexAliceJson.CAP_ON_OFF);
+                        json.createDevice(yDev);
+                        json.addCapabilities(yDev);
+                        yandexDevicesList.put(item.getName(), yDev);
                     } else {
-                        json.createDevice(item.getName(), Objects.requireNonNull(item.getLabel()), json.DEV_SWITCH);
-                        json.addCapabilities(json.CAP_ON_OFF, item.getName());
+                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                YandexAliceJson.DEV_SWITCH);
+                        yDev.addCapabilities(YandexAliceJson.CAP_ON_OFF);
+                        json.createDevice(yDev);
+                        json.addCapabilities(yDev);
+                        yandexDevicesList.put(item.getName(), yDev);
                     }
+                } else if (item.getType().equals("Number:Temperature")) {
+                    YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                            YandexAliceJson.DEV_SENSOR);
+                    json.createDevice(yDev);
+                    if (item.hasTag("kelvin")) {
+                        yDev.addProperties(YandexAliceJson.PROP_FLOAT, YandexAliceJson.INS_TEMP,
+                                YandexAliceJson.UNIT_TEMP_KELVIN);
+                        json.addProperties(yDev);
+                    } else {
+                        yDev.addProperties(YandexAliceJson.PROP_FLOAT, YandexAliceJson.INS_TEMP,
+                                YandexAliceJson.UNIT_TEMP_CELSIUS);
+                        json.addProperties(yDev);
+                    }
+                    yandexDevicesList.put(item.getName(), yDev);
                 } else if (item.getType().equals("Group")) {
                     logger.debug("It`s a GROUP!");
                     GroupItem groupItem = (GroupItem) item;
