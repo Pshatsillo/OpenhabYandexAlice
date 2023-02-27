@@ -69,7 +69,8 @@ public class YandexAliceJson {
         JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
         JSONArray caps = new JSONArray();
         for (YandexAliceCapabilities cp : yaDev.getCapabilities()) {
-            caps.put(new JSONObject().put("type", cp.getCapability()).put("parameters", new JSONObject()));
+            caps.put(new JSONObject().put("type", cp.getCapability()).put("parameters", new JSONObject())
+                    .put("retrievable", true).put("reportable", true));
         }
         for (int i = 0; i < device.length(); i++) {
             String capID = device.getJSONObject(i).get("id").toString();
@@ -84,9 +85,10 @@ public class YandexAliceJson {
     public void addProperties(YandexDevice yaDev) {
         JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
         JSONArray properties = new JSONArray();
-        for (YandexAliceProperties prp : yaDev.getProperty()) {
-            properties.put(new JSONObject().put("type", prp.getPropName()).put("parameters",
-                    new JSONObject().put("instance", prp.getInstance()).put("unit", prp.getUnit())));
+        for (YandexAliceProperties prp : yaDev.getProperties()) {
+            properties.put(new JSONObject().put("type", prp.getPropName())
+                    .put("parameters", new JSONObject().put("instance", prp.getInstance()).put("unit", prp.getUnit()))
+                    .put("retrievable", true).put("reportable", true));
         }
         for (int i = 0; i < device.length(); i++) {
             String capID = device.getJSONObject(i).get("id").toString();
@@ -105,12 +107,19 @@ public class YandexAliceJson {
         returnRequest.getJSONObject("payload").getJSONArray("devices").put(deviceObj);
     }
 
-    public void addCapability(String capability, String status) {
-        if(status.equals("on")){
+    public void addCapabilityState(String capability, String status) {
+        if (status.equals("on")) {
             status = "true";
         } else if (status.equals("off")) {
             status = "false";
         }
+        log.debug("Cap set");
+    }
 
+    public void addPropertyState(YandexAliceProperties prop, String state) {
+        returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties",
+                new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state", new JSONObject()
+                        .put("instance", prop.getInstance()).put("value", Integer.parseInt(state.split(" ")[0])))));
+        log.debug("Property set");
     }
 }

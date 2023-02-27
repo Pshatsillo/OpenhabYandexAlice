@@ -77,7 +77,7 @@ public class YandexDevice {
         this.properties.add(prop);
     }
 
-    public List<YandexAliceProperties> getProperty() {
+    public List<YandexAliceProperties> getProperties() {
         return properties;
     }
 }

@@ -8,7 +8,17 @@
 		<parameter name="token" type="text" required="false">
 			<label>Yandex token</label>
 			<description>You can get it at
-				https://oauth.yandex.ru/authorize?response_type=token&amp;client_id=583d146e210a4f07945657f782dae092</description>
+				https://yandex.ru/dev/dialogs/smart-home/doc/reference-alerts/resources-alerts.html</description>
+		</parameter>
+		<parameter name="skillID" type="text" required="false">
+			<label>Yandex skill id</label>
+			<description>You can get it at
+				https://dialogs.yandex.ru/developer/ your skill, bottom side, copy</description>
+		</parameter>
+		<parameter name="oauth" type="text" required="false">
+			<label>OAuth Yandex token</label>
+			<description>You can get it at
+				https://yandex.ru/dev/dialogs/smart-home/doc/reference-alerts/resources-alerts.html</description>
 		</parameter>
 	</config-description>
 </config-description:config-descriptions>
