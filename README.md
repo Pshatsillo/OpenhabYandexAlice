@@ -48,3 +48,19 @@
    * Lightbulb - Лампочка, светильник, ночник, люстра.
    * PowerOutlet - Розетка
    * Без класса - Выключатель
+   * Number:Temperature - датчик температуры
+
+https://yandex.ru/dev/dialogs/smart-home/doc/concepts/device-types.html
+
+| OpenHab tag/item                     | Yandex                                                              |  Describe   |
+|--------------------------------------|---------------------------------------------------------------------|-----|
+| (Semantic)Lightbulb                  | devices.types.light                                                 |   Лампочка, светильник, ночник, люстра  |
+| (Semantic)PowerOutlet                | devices.types.socket                                                |  Розетка   |
+| (Item no tag)Switch                  | devices.types.switch                                                |  Выключатель   |
+| (Item) Number (Semantic) Temperature | devices.types.sensor/ devices.properties.float/ temperature         |  Отображение показаний температуры   |
+| (Item) Number (Semantic) Humidity    | devices.types.sensor/ devices.properties.float/           humidity  |  Отображение показаний влажности.   |
+| (Item) Number (Semantic) CO2         | devices.types.sensor/ devices.properties.float/           co2_level |   Отображение показаний уровня углекислого газа.|
+|                                      |                                                                     |     |
+|                                      |                                                                     |     |
+
+

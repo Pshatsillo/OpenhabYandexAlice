@@ -24,13 +24,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.config.core.ConfigurableService;
 import org.openhab.core.events.Event;
 import org.openhab.core.events.EventFilter;
@@ -86,6 +91,9 @@ public class YandexService implements EventSubscriber {
     private String oAuth;
     private static String uuid;
     private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
+    private @Nullable ScheduledFuture<?> refreshPollingJob;
+    protected final ScheduledExecutorService scheduler = ThreadPoolManager
+            .getScheduledPool(ThreadPoolManager.THREAD_POOL_NAME_COMMON);
 
     @Activate
     public YandexService(final @Reference HttpClientFactory httpClientFactory,
@@ -102,6 +110,35 @@ public class YandexService implements EventSubscriber {
         YandexService.eventPublisher = eventPublisher;
         getItemsList();
         uuid = InstanceUUID.get();
+
+        if (refreshPollingJob == null || refreshPollingJob.isCancelled()) {
+            refreshPollingJob = scheduler.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    refresh();
+                }
+            }, 5, 60, TimeUnit.SECONDS);
+        }
+    }
+
+    private void refresh() {
+        logger.debug("refreshing...");
+        YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L, uuid);
+        Collection<Item> itemsList = itemRegistry.getItems();
+        for (Item item : itemsList) {
+            YandexDevice yaDev = yandexDevicesList.get(item.getName());
+            if (yaDev != null) {
+                eventJson.setDeviceID(yaDev);
+                yaDev.getProperties().forEach((property) -> {
+                    eventJson.addPropertyState(yaDev, property, item.getState());
+                });
+                yaDev.getCapabilities().forEach((cap) -> {
+                    eventJson.addCapabilityState(yaDev, cap, item.getState());
+                });
+            }
+        }
+
+        updateCallback(eventJson.returnRequest.toString());
     }
 
     private void getItemsList() {
@@ -165,15 +202,7 @@ public class YandexService implements EventSubscriber {
                     this.httpService.createDefaultHttpContext());
         } catch (ServletException | NamespaceException ignored) {
         }
-        //getInfoFromYandex();
-    }
-
-    @Deactivate
-    protected void deactivate() {
-        try {
-            httpClient.stop();
-        } catch (Exception e) {
-        }
+        // getInfoFromYandex();
     }
 
     @Modified
@@ -202,70 +231,45 @@ public class YandexService implements EventSubscriber {
 
     @Override
     public void receive(Event event) {
-        //getInfoFromYandex();
+        // getInfoFromYandex();
         if (!action) {
             ItemStateEvent ise = (ItemStateEvent) event;
             String name = ise.getItemName();
             State state = ise.getItemState();
-            JSONObject requestObj = new JSONObject();
-            if (state instanceof OnOffType) {
-                boolean stateBool;
-                if (state.toString().equals("ON")) {
-                    stateBool = true;
+            try {
+                Item item = itemRegistry.getItem(name);
+                if (!item.getGroupNames().isEmpty()) {
+                    logger.debug("it is group member");
                 } else {
-                    stateBool = false;
+                    if (item.hasTag("Yandex")) {
+                        if (state instanceof OnOffType) {
+                            YandexDevice yaDev;
+                            yaDev = yandexDevicesList.get(name);
+                            YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L,
+                                    uuid);
+                            eventJson.setDeviceID(yaDev);
+                            for (YandexAliceProperties prop : yaDev.getProperties()) {
+                                eventJson.addPropertyState(prop, state);
+                            }
+                            for (YandexAliceCapabilities cap : yaDev.getCapabilities()) {
+                                eventJson.addCapabilityState(cap, state);
+                            }
+                            updateCallback(eventJson.returnRequest.toString());
+                        } else if (state instanceof DecimalType) {
+                            YandexDevice yaDev;
+                            yaDev = yandexDevicesList.get(name);
+                            YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L,
+                                    uuid);
+                            eventJson.setDeviceID(yaDev);
+                            for (YandexAliceProperties prop : yaDev.getProperties()) {
+                                eventJson.addPropertyState(prop, ((DecimalType) state).intValue());
+                            }
+                            updateCallback(eventJson.returnRequest.toString());
+                        }
+                    }
                 }
-                JSONArray devices = new JSONArray();
-                devices.put(new JSONObject().put("id", yandexId.get(name)).put("actions",
-                        new JSONArray().put(new JSONObject().put("type", YandexAliceJson.CAP_ON_OFF).put("state",
-                                new JSONObject().put("instance", "on").put("value", stateBool)))));
-                requestObj.put("devices", devices);
-                // ======================
-
-                // https://api.iot.yandex.net/v1.0/devices/actions
-//                HttpURLConnection con;
-//                URL yandexURL = null;
-//                try {
-//                    yandexURL = new URL("https://api.iot.yandex.net/v1.0/devices/actions");
-//                    con = (HttpURLConnection) yandexURL.openConnection();
-//                    con.setRequestMethod("POST");
-//                    con.setRequestProperty("Authorization", "Bearer " + yandexToken);
-//                    con.setRequestProperty("Content-Type", "application/json");
-//                    con.setDoOutput(true);
-//                    try (OutputStream os = con.getOutputStream()) {
-//                        byte[] input = requestObj.toString().getBytes(StandardCharsets.UTF_8);
-//                        os.write(input, 0, input.length);
-//                    }
-//
-//                    int code = con.getResponseCode();
-//                    Map<String, List<String>> headers = con.getHeaderFields();
-//                    logger.debug("Response: {}", con.getResponseMessage());
-//                    BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-//                    String inputLine;
-//                    StringBuilder response = new StringBuilder();
-//                    while ((inputLine = in.readLine()) != null) {
-//                        response.append(inputLine);
-//                    }
-//                    in.close();
-//                    String result = response.toString().trim();
-//                    logger.debug("input string from REST: {}", result);
-//                } catch (Exception e) {
-//                    logger.debug("ERROR {}", e.getLocalizedMessage());
-//                }
-                // =======================
-//TODO Сделать генерацию через YandexAliceJson
-            } else if (state instanceof DecimalType) {
-                YandexDevice yaDev = yandexDevicesList.get(name);
-                JSONArray devices = new JSONArray();
-                devices.put(new JSONObject().put("id", name).put("properties",
-                        new JSONArray().put(new JSONObject().put("type", "devices.properties.float").put("state",
-                                new JSONObject().put("instance", "temperature").put("value",
-                                        ((DecimalType) state).intValue())))));
-                // requestObj.put("devices", devices);
-                requestObj.put("ts", (double) System.currentTimeMillis() / 1000L).put("payload",
-                        new JSONObject().put("user_id", uuid).put("devices", devices));
-                updateCallback(requestObj.toString());
-                logger.debug("decimal type get update another way");
+            } catch (Exception ex) {
+                logger.debug("Event Error {}", ex.getLocalizedMessage());
             }
         } else {
             action = false;
@@ -274,40 +278,41 @@ public class YandexService implements EventSubscriber {
 
     private void updateCallback(String json) {
         logger.debug("updating. Json is: {}", json);
+        if (skillID != null) {
+            HttpURLConnection con;
+            URL yandexURL = null;
+            try {
+                yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + skillID + "/callback/state");
+                con = (HttpURLConnection) yandexURL.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Authorization", "OAuth " + oAuth);
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setDoOutput(true);
+                try (OutputStream os = con.getOutputStream()) {
+                    byte[] input = json.getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
 
-        HttpURLConnection con;
-        URL yandexURL = null;
-        try {
-            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + skillID + "/callback/state");
-            con = (HttpURLConnection) yandexURL.openConnection();
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "OAuth " + oAuth);
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setDoOutput(true);
-            try (OutputStream os = con.getOutputStream()) {
-                byte[] input = json.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
+                int code = con.getResponseCode();
+                Map<String, List<String>> headers = con.getHeaderFields();
+                logger.debug("Response: {}, code {}", con.getResponseMessage(), code);
+                // InputStream resp = con.getInputStream();
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+                String result = response.toString().trim();
+                logger.debug("input string from REST: {}", result);
+            } catch (Exception e) {
+                logger.debug("ERROR {}", e.getLocalizedMessage());
             }
-
-            int code = con.getResponseCode();
-            Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}", con.getResponseMessage(), code);
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-            String result = response.toString().trim();
-            logger.debug("input string from REST: {}", result);
-        } catch (Exception e) {
-            logger.debug("ERROR {}", e.getLocalizedMessage());
         }
     }
 
     public static String getItemState(String json, String header) {
-        // JSONObject answer = new JSONObject();
         YandexAliceJson aliceJson = new YandexAliceJson(header);
         try {
             JSONObject parseItem = new JSONObject(json);
@@ -315,29 +320,19 @@ public class YandexService implements EventSubscriber {
             String itemID = dev.getJSONObject(0).getString("id");
             YandexDevice yDev = yandexDevicesList.get(itemID);
             // Item item = itemRegistry.getItem(itemID.getString("id"));
-            logger.debug("Getting item {} state", yDev.getId());
             aliceJson.setDeviceID(yDev);
             Item item = itemRegistry.getItem(yDev.getId());
             if (!item.getType().equals("Group")) {
                 for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
-                    aliceJson.addCapabilityState(cap.getCapability(), item.getState().toString());
+                    aliceJson.addCapabilityState(cap, item.getState());
                 }
                 for (YandexAliceProperties prop : yDev.getProperties()) {
-                    aliceJson.addPropertyState(prop, item.getState().toString());
+                    aliceJson.addPropertyState(prop, item.getState());
                 }
 
             } else {
                 logger.debug("Construction in progress");
             }
-            // JSONObject payload = new JSONObject();
-            // JSONArray devices = new JSONArray();
-            // answer.put("payload", payload);
-            // answer.put("request_id", header);
-            // JSONObject itemJson = new JSONObject();
-            // itemJson.put("id", item.getName());
-            // itemJson.put("capabilities", getCapabilitiesState(item));
-            // devices.put(itemJson);
-            // payload.put("devices", devices);
         } catch (Exception e) {
             logger.debug("Error get item {} state", e.getLocalizedMessage());
         }
@@ -353,39 +348,45 @@ public class YandexService implements EventSubscriber {
                 if (item.getType().equals("Switch")) {
                     if (item.hasTag("Lightbulb")) {
                         YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexAliceJson.DEV_LIGHT);
-                        yDev.addCapabilities(YandexAliceJson.CAP_ON_OFF);
+                                YandexDevice.DEV_LIGHT);
+                        yDev.addCapabilities(YandexDevice.CAP_ON_OFF);
                         json.createDevice(yDev);
                         json.addCapabilities(yDev);
                         yandexDevicesList.put(item.getName(), yDev);
                     } else if (item.hasTag("PowerOutlet")) {
                         YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexAliceJson.DEV_SOCKET);
-                        yDev.addCapabilities(YandexAliceJson.CAP_ON_OFF);
+                                YandexDevice.DEV_SOCKET);
+                        yDev.addCapabilities(YandexDevice.CAP_ON_OFF);
                         json.createDevice(yDev);
                         json.addCapabilities(yDev);
                         yandexDevicesList.put(item.getName(), yDev);
                     } else {
                         YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexAliceJson.DEV_SWITCH);
-                        yDev.addCapabilities(YandexAliceJson.CAP_ON_OFF);
+                                YandexDevice.DEV_SWITCH);
+                        yDev.addCapabilities(YandexDevice.CAP_ON_OFF);
                         json.createDevice(yDev);
                         json.addCapabilities(yDev);
                         yandexDevicesList.put(item.getName(), yDev);
                     }
-                } else if (item.getType().equals("Number:Temperature")) {
+                } else if (item.getType().contains("Number")) {
                     YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                            YandexAliceJson.DEV_SENSOR);
+                            YandexDevice.DEV_SENSOR);
                     json.createDevice(yDev);
-                    if (item.hasTag("kelvin")) {
-                        yDev.addProperties(YandexAliceJson.PROP_FLOAT, YandexAliceJson.INS_TEMP,
-                                YandexAliceJson.UNIT_TEMP_KELVIN);
-                        json.addProperties(yDev);
-                    } else {
-                        yDev.addProperties(YandexAliceJson.PROP_FLOAT, YandexAliceJson.INS_TEMP,
-                                YandexAliceJson.UNIT_TEMP_CELSIUS);
-                        json.addProperties(yDev);
+                    if (item.hasTag("Temperature")) {
+                        if (item.hasTag("kelvin")) {
+                            yDev.addProperties(YandexDevice.PROP_FLOAT, YandexDevice.INS_TEMP,
+                                    YandexDevice.UNIT_TEMP_KELVIN);
+                        } else {
+                            yDev.addProperties(YandexDevice.PROP_FLOAT, YandexDevice.INS_TEMP,
+                                    YandexDevice.UNIT_TEMP_CELSIUS);
+                        }
+                    } else if (item.hasTag("Humidity")) {
+                        yDev.addProperties(YandexDevice.PROP_FLOAT, YandexDevice.INS_HUMIDITY,
+                                YandexDevice.UNIT_PERCENT);
+                    } else if (item.hasTag("CO2")) {
+                        yDev.addProperties(YandexDevice.PROP_FLOAT, YandexDevice.INS_CO2, YandexDevice.UNIT_PPM);
                     }
+                    json.addProperties(yDev);
                     yandexDevicesList.put(item.getName(), yDev);
                 } else if (item.getType().equals("Group")) {
                     logger.debug("It`s a GROUP!");
@@ -463,7 +464,6 @@ public class YandexService implements EventSubscriber {
             } else {
                 eventPublisher.post(ItemEventFactory.createCommandEvent(id, OnOffType.OFF));
             }
-            logger.debug("Parsing finish");
             JSONObject payload = new JSONObject();
             JSONArray devices = new JSONArray();
             answer.put("payload", payload);
@@ -494,5 +494,19 @@ public class YandexService implements EventSubscriber {
             itemJson.put("capabilities", capabilitiesArray);
         }
         return capabilitiesArray;
+    }
+
+    @Deactivate
+    protected void deactivate() {
+        try {
+            httpClient.stop();
+        } catch (Exception ignored) {
+        }
+
+        if (refreshPollingJob != null && !refreshPollingJob.isCancelled()) {
+            refreshPollingJob.cancel(true);
+            refreshPollingJob = null;
+        }
+        yandexDevicesList.clear();
     }
 }

@@ -15,12 +15,28 @@ package org.openhab.io.yandexalice.internal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 /**
  * The {@link YandexDevice} model for Yandex item
  *
  * @author Petr Shatsillo - Initial contribution
  */
+@NonNullByDefault
 public class YandexDevice {
+    public static final String UNIT_TEMP_KELVIN = "unit.temperature.kelvin";
+    public static final String UNIT_TEMP_CELSIUS = "unit.temperature.celsius";
+    public static final String UNIT_PERCENT = "unit.percent";
+    public static final String UNIT_PPM = "unit.ppm";
+    public static final String PROP_FLOAT = "devices.properties.float";
+    public static final String DEV_SENSOR = "devices.types.sensor";
+    public static final String DEV_SOCKET = "devices.types.socket";
+    public static final String DEV_SWITCH = "devices.types.switch";
+    public static final String DEV_LIGHT = "devices.types.light";
+    public static final String INS_TEMP = "temperature";
+    public static final String INS_HUMIDITY = "humidity";
+    public static final String INS_CO2 = "co2_level";
+    public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     private String id;
     private String name;
     private String type;
@@ -36,7 +52,10 @@ public class YandexDevice {
 
     public void addCapabilities(String capability) {
         YandexAliceCapabilities cp = new YandexAliceCapabilities();
-        cp.addCapability(capability);
+        if (capability.equals(CAP_ON_OFF)) {
+            cp.addCapability(capability);
+            cp.setInstance("on");
+        }
         capabilities.add(cp);
     }
 

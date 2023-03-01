@@ -18,13 +18,22 @@ package org.openhab.io.yandexalice.internal;
  * @author Petr Shatsillo - Initial contribution
  */
 public class YandexAliceCapabilities {
-    String capability;
+    String capabilityName;
+    String instance;
 
     public void addCapability(String capability) {
-        this.capability = capability;
+        this.capabilityName = capability;
     }
 
-    public String getCapability() {
-        return capability;
+    public String getCapabilityName() {
+        return capabilityName;
+    };
+
+    public String getInstance() {
+        return instance;
+    };
+
+    public void setInstance(String instance) {
+        this.instance = instance;
     };
 }
