@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * The {@link YandexDevice} model for Yandex item
@@ -29,13 +30,17 @@ public class YandexDevice {
     public static final String UNIT_PERCENT = "unit.percent";
     public static final String UNIT_PPM = "unit.ppm";
     public static final String PROP_FLOAT = "devices.properties.float";
+    public static final String PROP_EVENT = "devices.properties.event";
     public static final String DEV_SENSOR = "devices.types.sensor";
     public static final String DEV_SOCKET = "devices.types.socket";
     public static final String DEV_SWITCH = "devices.types.switch";
     public static final String DEV_LIGHT = "devices.types.light";
+    public static final String DEV_OPENABLE = "devices.types.openable";
+    public static final String DEV_CURTAIN = "devices.types.openable.curtain";
     public static final String INS_TEMP = "temperature";
     public static final String INS_HUMIDITY = "humidity";
     public static final String INS_CO2 = "co2_level";
+    public static final String INS_OPEN = "open";
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     private String id;
     private String name;
@@ -91,7 +96,7 @@ public class YandexDevice {
         this.capabilities = capabilities;
     }
 
-    public void addProperties(String propName, String instance, String unit) {
+    public void addProperties(String propName, String instance, @Nullable String unit) {
         YandexAliceProperties prop = new YandexAliceProperties(propName, instance, unit);
         this.properties.add(prop);
     }

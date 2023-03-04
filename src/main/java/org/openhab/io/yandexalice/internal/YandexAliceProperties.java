@@ -12,6 +12,9 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 /**
  * The {@link YandexAliceProperties} model for Yandex properties
  *
@@ -21,11 +24,19 @@ public class YandexAliceProperties {
     String propName;
     String instance;
     String unit;
+    JSONArray events;
 
     public YandexAliceProperties(String propName, String instance, String unit) {
         this.propName = propName;
         this.instance = instance;
         this.unit = unit;
+
+        if (propName.equals(YandexDevice.PROP_EVENT)) {
+            if (instance.equals(YandexDevice.INS_OPEN)) {
+                events = new JSONArray().put(new JSONObject().put("value", "opened"))
+                        .put(new JSONObject().put("value", "closed"));
+            }
+        }
     }
 
     public String getPropName() {
@@ -38,5 +49,9 @@ public class YandexAliceProperties {
 
     public String getUnit() {
         return unit;
+    }
+
+    public JSONArray getEvents() {
+        return events;
     }
 }

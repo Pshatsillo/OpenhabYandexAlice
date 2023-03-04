@@ -94,9 +94,17 @@ public class YandexAliceJson {
         JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
         JSONArray properties = new JSONArray();
         for (YandexAliceProperties prp : yaDev.getProperties()) {
-            properties.put(new JSONObject().put("type", prp.getPropName())
-                    .put("parameters", new JSONObject().put("instance", prp.getInstance()).put("unit", prp.getUnit()))
-                    .put("retrievable", true).put("reportable", true));
+            if (prp.propName.equals(YandexDevice.PROP_EVENT)) {
+                properties.put(new JSONObject().put("type", prp.getPropName())
+                        .put("parameters",
+                                new JSONObject().put("instance", prp.getInstance()).put("events", prp.getEvents()))
+                        .put("retrievable", true).put("reportable", true));
+            } else if (prp.propName.equals(YandexDevice.PROP_FLOAT)) {
+                properties.put(new JSONObject().put("type", prp.getPropName())
+                        .put("parameters",
+                                new JSONObject().put("instance", prp.getInstance()).put("unit", prp.getUnit()))
+                        .put("retrievable", true).put("reportable", true));
+            }
         }
         for (int i = 0; i < device.length(); i++) {
             String capID = device.getJSONObject(i).get("id").toString();
@@ -144,6 +152,16 @@ public class YandexAliceJson {
             returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties",
                     new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state", new JSONObject()
                             .put("instance", prop.getInstance()).put("value", ((Number) state).doubleValue()))));
+        } else if (state instanceof OpenClosedType) {
+            String st = "";
+            if (state.toString().equals("CLOSED")) {
+                st = "closed";
+            } else {
+                st = "opened";
+            }
+            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties",
+                    new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state",
+                            new JSONObject().put("instance", prop.getInstance()).put("value", st))));
         }
     }
 
@@ -165,7 +183,7 @@ public class YandexAliceJson {
                     returnRequest.getJSONObject("payload").put("devices", device);
                 }
             }
-        } else if ((state instanceof OnOffType) || (state instanceof StringType) || (state instanceof OpenClosedType)) {
+        } else if ((state instanceof OnOffType) || (state instanceof StringType)) {
             JSONArray device = returnRequest.getJSONObject("payload").getJSONArray("devices");
             for (int i = 0; i < device.length(); i++) {
                 if (device.getJSONObject(i).getString("id").equals(yaDev.getId())) {
@@ -173,6 +191,22 @@ public class YandexAliceJson {
                             new JSONArray()
                                     .put(new JSONObject().put("type", prop.getPropName()).put("state", new JSONObject()
                                             .put("instance", prop.getInstance()).put("value", state.toString()))));
+                    returnRequest.getJSONObject("payload").put("devices", device);
+                }
+            }
+        } else if ((state instanceof OpenClosedType)) {
+            String st = "";
+            if (state.toString().equals("CLOSED")) {
+                st = "closed";
+            } else {
+                st = "opened";
+            }
+            JSONArray device = returnRequest.getJSONObject("payload").getJSONArray("devices");
+            for (int i = 0; i < device.length(); i++) {
+                if (device.getJSONObject(i).getString("id").equals(yaDev.getId())) {
+                    device.getJSONObject(i).put("properties",
+                            new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state",
+                                    new JSONObject().put("instance", prop.getInstance()).put("value", st))));
                     returnRequest.getJSONObject("payload").put("devices", device);
                 }
             }

@@ -50,6 +50,7 @@ import org.openhab.core.items.events.ItemEventFactory;
 import org.openhab.core.items.events.ItemStateEvent;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
+import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.types.State;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -126,15 +127,17 @@ public class YandexService implements EventSubscriber {
         YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L, uuid);
         Collection<Item> itemsList = itemRegistry.getItems();
         for (Item item : itemsList) {
-            YandexDevice yaDev = yandexDevicesList.get(item.getName());
-            if (yaDev != null) {
-                eventJson.setDeviceID(yaDev);
-                yaDev.getProperties().forEach((property) -> {
-                    eventJson.addPropertyState(yaDev, property, item.getState());
-                });
-                yaDev.getCapabilities().forEach((cap) -> {
-                    eventJson.addCapabilityState(yaDev, cap, item.getState());
-                });
+            if (!item.getType().equals("Contact")) {
+                YandexDevice yaDev = yandexDevicesList.get(item.getName());
+                if (yaDev != null) {
+                    eventJson.setDeviceID(yaDev);
+                    yaDev.getProperties().forEach((property) -> {
+                        eventJson.addPropertyState(yaDev, property, item.getState());
+                    });
+                    yaDev.getCapabilities().forEach((cap) -> {
+                        eventJson.addCapabilityState(yaDev, cap, item.getState());
+                    });
+                }
             }
         }
 
@@ -232,6 +235,7 @@ public class YandexService implements EventSubscriber {
     @Override
     public void receive(Event event) {
         // getInfoFromYandex();
+        logger.debug("event {}", event.getType());
         if (!action) {
             ItemStateEvent ise = (ItemStateEvent) event;
             String name = ise.getItemName();
@@ -263,6 +267,16 @@ public class YandexService implements EventSubscriber {
                             eventJson.setDeviceID(yaDev);
                             for (YandexAliceProperties prop : yaDev.getProperties()) {
                                 eventJson.addPropertyState(prop, ((DecimalType) state).intValue());
+                            }
+                            updateCallback(eventJson.returnRequest.toString());
+                        } else if (state instanceof OpenClosedType) {
+                            YandexDevice yaDev;
+                            yaDev = yandexDevicesList.get(name);
+                            YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L,
+                                    uuid);
+                            eventJson.setDeviceID(yaDev);
+                            for (YandexAliceProperties prop : yaDev.getProperties()) {
+                                eventJson.addPropertyState(prop, state);
                             }
                             updateCallback(eventJson.returnRequest.toString());
                         }
@@ -388,6 +402,17 @@ public class YandexService implements EventSubscriber {
                     }
                     json.addProperties(yDev);
                     yandexDevicesList.put(item.getName(), yDev);
+                } else if (item.getType().contains("Contact")) {
+                    if ((item.hasTag("Door")) || (item.hasTag("GarageDoor")) || (item.hasTag("FrontDoor"))
+                            || (item.hasTag("CellarDoor")) || (item.hasTag("SideDoor")) || (item.hasTag("BackDoor"))
+                            || (item.hasTag("Blinds")) || (item.hasTag("Window"))) {
+                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                YandexDevice.DEV_OPENABLE);
+                        json.createDevice(yDev);
+                        yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.INS_OPEN, null);
+                        json.addProperties(yDev);
+                        yandexDevicesList.put(item.getName(), yDev);
+                    }
                 } else if (item.getType().equals("Group")) {
                     logger.debug("It`s a GROUP!");
                     GroupItem groupItem = (GroupItem) item;
