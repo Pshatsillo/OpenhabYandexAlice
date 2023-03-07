@@ -39,15 +39,15 @@ public class YandexAliceCapabilities {
 
     public String getCapabilityName() {
         return capabilityName;
-    };
+    }
 
     public String getInstance() {
         return instance;
-    };
+    }
 
     public void setInstance(String instance) {
         this.instance = instance;
-    };
+    }
 
     public void setUnit(String unit) {
         this.unit = unit;

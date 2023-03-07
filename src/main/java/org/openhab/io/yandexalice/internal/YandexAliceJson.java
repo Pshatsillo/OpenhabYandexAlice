@@ -46,10 +46,10 @@ public class YandexAliceJson {
         this.requestID = requestID;
     }
 
-    public YandexAliceJson() {
-        returnRequest.put("payload", new JSONObject());
-        returnRequest.getJSONObject("payload").put("devices", new JSONArray());
-    }
+//    public YandexAliceJson() {
+//        returnRequest.put("payload", new JSONObject());
+//        returnRequest.getJSONObject("payload").put("devices", new JSONArray());
+//    }
 
     public YandexAliceJson(double ts, String uuid) {
         returnRequest.put("payload", new JSONObject());
@@ -62,12 +62,6 @@ public class YandexAliceJson {
         payload.put("user_id", s);
         payload.put("devices", new JSONArray());
         returnRequest.put("payload", payload);
-    }
-
-    public void setDeviceType(String s) {
-    }
-
-    public void setDeviceName(String deviceLabel) {
     }
 
     public void setDeviceID(@Nullable YandexDevice yaDevice) {

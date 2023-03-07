@@ -44,11 +44,11 @@ public class YandexDevice {
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     public static final String CAP_COLOR_SETTINGS = "devices.capabilities.color_setting";
     public static final String CAP_RANGE = "devices.capabilities.range";
-    private String id;
-    private String name;
-    private String type;
+    private final String id;
+    private final String name;
+    private final String type;
     private final List<YandexAliceProperties> properties = new ArrayList<>();
-    private List<YandexAliceCapabilities> capabilities;
+    private final List<YandexAliceCapabilities> capabilities;
     private State state;
 
     public State getState() {
@@ -69,16 +69,20 @@ public class YandexDevice {
 
     public void addCapabilities(String capability) {
         YandexAliceCapabilities cp = new YandexAliceCapabilities();
-        if (capability.equals(CAP_ON_OFF)) {
-            cp.addCapability(capability);
-            cp.setInstance("on");
-        } else if (capability.equals(CAP_COLOR_SETTINGS)) {
-            cp.addCapability(capability);
-        } else if (capability.equals(CAP_RANGE)) {
-            cp.addCapability(capability);
-            cp.setInstance("brightness");
-            cp.setUnit(UNIT_PERCENT);
-            cp.setRange(0, 100, 1);
+        switch (capability) {
+            case CAP_ON_OFF:
+                cp.addCapability(capability);
+                cp.setInstance("on");
+                break;
+            case CAP_COLOR_SETTINGS:
+                cp.addCapability(capability);
+                break;
+            case CAP_RANGE:
+                cp.addCapability(capability);
+                cp.setInstance("brightness");
+                cp.setUnit(UNIT_PERCENT);
+                cp.setRange(0, 100, 1);
+                break;
         }
         capabilities.add(cp);
     }
@@ -91,28 +95,11 @@ public class YandexDevice {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
     }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setCapabilities(List<YandexAliceCapabilities> capabilities) {
-        this.capabilities = capabilities;
     }
 
     public void addProperties(String propName, String instance, String unit) {
