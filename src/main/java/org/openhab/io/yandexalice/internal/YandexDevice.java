@@ -98,6 +98,7 @@ public class YandexDevice {
     public String getName() {
         return name;
     }
+
     public String getType() {
         return type;
     }

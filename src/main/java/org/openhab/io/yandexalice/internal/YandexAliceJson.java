@@ -46,10 +46,10 @@ public class YandexAliceJson {
         this.requestID = requestID;
     }
 
-//    public YandexAliceJson() {
-//        returnRequest.put("payload", new JSONObject());
-//        returnRequest.getJSONObject("payload").put("devices", new JSONArray());
-//    }
+    // public YandexAliceJson() {
+    // returnRequest.put("payload", new JSONObject());
+    // returnRequest.getJSONObject("payload").put("devices", new JSONArray());
+    // }
 
     public YandexAliceJson(double ts, String uuid) {
         returnRequest.put("payload", new JSONObject());
