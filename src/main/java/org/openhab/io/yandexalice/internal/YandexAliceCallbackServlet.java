@@ -13,7 +13,6 @@
 package org.openhab.io.yandexalice.internal;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -21,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MediaType;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Petr Shatsillo - Initial contribution
  */
+@NonNullByDefault
 public class YandexAliceCallbackServlet extends HttpServlet {
     private static final long serialVersionUID = -2725161358635927815L;
     private final Logger logger = LoggerFactory.getLogger(YandexAliceCallbackServlet.class);
@@ -38,7 +39,7 @@ public class YandexAliceCallbackServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         logger.debug("Get servlet: {}", req.getPathInfo());
         resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding("utf-8");
@@ -53,18 +54,20 @@ public class YandexAliceCallbackServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpURLConnection con;
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         logger.debug("POST servlet: {}", req.getRequestURI());
         String body = req.getReader().lines().reduce("", String::concat);
         logger.debug("POST request from Yandex: {}", body);
         String answer = "";
-        if (req.getRequestURI().equals("/yandex/v1.0/user/devices/query")) {
-            logger.debug("Requesting item state from Yandex: {}", body);
-            answer = YandexService.getItemState(body, req.getHeader("X-Request-Id"));
-        } else if (req.getRequestURI().equals("/yandex/v1.0/user/devices/action")) {
-            logger.debug("Action item from Yandex: {}", body);
-            answer = YandexService.setItemState(body, req.getHeader("X-Request-Id"));
+        if (req.getRequestURI() != null) {
+            String reqUri = req.getRequestURI();
+            if (("/yandex/v1.0/user/devices/query").equals(reqUri)) {
+                logger.debug("Requesting item state from Yandex: {}", body);
+                answer = YandexService.getItemState(body, req.getHeader("X-Request-Id"));
+            } else if (("/yandex/v1.0/user/devices/action").equals(reqUri)) {
+                logger.debug("Action item from Yandex: {}", body);
+                answer = YandexService.setItemState(body, req.getHeader("X-Request-Id"));
+            }
         }
         resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding("utf-8");

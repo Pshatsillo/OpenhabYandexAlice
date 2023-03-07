@@ -12,14 +12,26 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 /**
  * The {@link YandexAliceCapabilities} model for Yandex capabilities
  *
  * @author Petr Shatsillo - Initial contribution
  */
+@NonNullByDefault
 public class YandexAliceCapabilities {
-    String capabilityName;
+    String capabilityName = "";
     String instance;
+    private String unit;
+    private int precisionRange;
+    private int maxRange;
+    private int minRange;
+
+    public YandexAliceCapabilities() {
+        instance = "";
+        unit = "";
+    }
 
     public void addCapability(String capability) {
         this.capabilityName = capability;
@@ -36,4 +48,30 @@ public class YandexAliceCapabilities {
     public void setInstance(String instance) {
         this.instance = instance;
     };
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public void setRange(int minRange, int maxRange, int precisionRange) {
+        this.minRange = minRange;
+        this.maxRange = maxRange;
+        this.precisionRange = precisionRange;
+    }
+
+    public int getMinRange() {
+        return minRange;
+    }
+
+    public int getMaxRange() {
+        return maxRange;
+    }
+
+    public int getPrecision() {
+        return precisionRange;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
 }

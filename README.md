@@ -45,18 +45,18 @@
 1. Добавляем в желаемый Item Non-Semantic Tags - Yandex, обновляем приложение "Умный дом" Яндекса
 2. Тип устройства определяется по Semantic Class, [Устройства Алисы](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/device-types.html)
 
-| OpenHab tag/item                     | Yandex                                                              |  Describe   |
-|--------------------------------------|---------------------------------------------------------------------|-----|
-| (Semantic)Lightbulb                  | devices.types.light                                                 |   Лампочка, светильник, ночник, люстра  |
-| (Semantic)PowerOutlet                | devices.types.socket                                                |  Розетка   |
-| (Item no tag)Switch                  | devices.types.switch                                                |  Выключатель   |
-| (Item) Number (Semantic) Temperature | devices.types.sensor/ devices.properties.float/ temperature         |  Отображение показаний температуры   |
-| (Item) Number (Semantic) Humidity    | devices.types.sensor/ devices.properties.float/           humidity  |  Отображение показаний влажности.   |
-| (Item) Number (Semantic) CO2         | devices.types.sensor/ devices.properties.float/           co2_level |   Отображение показаний уровня углекислого газа.|
-|                                      |                                                                     |     |
-|                                      |                                                                     |     |
-|                                      |                                                                     |     |
-|                                      |                                                                     |     |
-|                                      |                                                                     |     |
-|                                      |                                                                     |     |
+| OpenHab tag/item                     | Yandex                                                                     |  Describe   |
+|--------------------------------------|----------------------------------------------------------------------------|-----|
+| (Semantic)Lightbulb                  | devices.types.light                                                        |   Лампочка, светильник, ночник, люстра  |
+| (Semantic)PowerOutlet                | devices.types.socket                                                       |  Розетка   |
+| (Item no tag)Switch                  | devices.types.switch                                                       |  Выключатель   |
+| (Item) Number (Semantic) Temperature | devices.types.sensor/ devices.properties.float/ temperature                |  Отображение показаний температуры   |
+| (Item) Number (Semantic) Humidity    | devices.types.sensor/ devices.properties.float/           humidity         |  Отображение показаний влажности.   |
+| (Item) Number (Semantic) CO2         | devices.types.sensor/ devices.properties.float/           co2_level        |   Отображение показаний уровня углекислого газа.|
+| (Item) Color                         | devices.types.light/ devices.capabilities.color_setting                    |  Управление цветом для светящихся элементов в устройстве   |
+| (Item) Dimmer                        | devices.types.light/                            devices.capabilities.range |  Изменение яркости световых элементов.   |
+|                                      |                                                                            |     |
+|                                      |                                                                            |     |
+|                                      |                                                                            |     |
+|                                      |                                                                            |     |
 

@@ -12,6 +12,7 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,17 +21,29 @@ import org.json.JSONObject;
  *
  * @author Petr Shatsillo - Initial contribution
  */
+@NonNullByDefault
 public class YandexAliceProperties {
     String propName;
     String instance;
-    String unit;
-    JSONArray events;
+    String unit = "";
+    JSONArray events = new JSONArray();
 
     public YandexAliceProperties(String propName, String instance, String unit) {
         this.propName = propName;
         this.instance = instance;
         this.unit = unit;
 
+        if (propName.equals(YandexDevice.PROP_EVENT)) {
+            if (instance.equals(YandexDevice.INS_OPEN)) {
+                events = new JSONArray().put(new JSONObject().put("value", "opened"))
+                        .put(new JSONObject().put("value", "closed"));
+            }
+        }
+    }
+
+    public YandexAliceProperties(String propName, String instance) {
+        this.propName = propName;
+        this.instance = instance;
         if (propName.equals(YandexDevice.PROP_EVENT)) {
             if (instance.equals(YandexDevice.INS_OPEN)) {
                 events = new JSONArray().put(new JSONObject().put("value", "opened"))

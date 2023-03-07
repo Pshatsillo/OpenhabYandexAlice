@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.types.State;
 
 /**
  * The {@link YandexDevice} model for Yandex item
@@ -42,17 +42,29 @@ public class YandexDevice {
     public static final String INS_CO2 = "co2_level";
     public static final String INS_OPEN = "open";
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
+    public static final String CAP_COLOR_SETTINGS = "devices.capabilities.color_setting";
+    public static final String CAP_RANGE = "devices.capabilities.range";
     private String id;
     private String name;
     private String type;
     private final List<YandexAliceProperties> properties = new ArrayList<>();
     private List<YandexAliceCapabilities> capabilities;
+    private State state;
 
-    public YandexDevice(String id, String name, String type) {
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public YandexDevice(String id, String name, String type, State state) {
         this.id = id;
         this.name = name;
         this.type = type;
         capabilities = new ArrayList<>();
+        this.state = state;
     }
 
     public void addCapabilities(String capability) {
@@ -60,6 +72,13 @@ public class YandexDevice {
         if (capability.equals(CAP_ON_OFF)) {
             cp.addCapability(capability);
             cp.setInstance("on");
+        } else if (capability.equals(CAP_COLOR_SETTINGS)) {
+            cp.addCapability(capability);
+        } else if (capability.equals(CAP_RANGE)) {
+            cp.addCapability(capability);
+            cp.setInstance("brightness");
+            cp.setUnit(UNIT_PERCENT);
+            cp.setRange(0, 100, 1);
         }
         capabilities.add(cp);
     }
@@ -96,8 +115,13 @@ public class YandexDevice {
         this.capabilities = capabilities;
     }
 
-    public void addProperties(String propName, String instance, @Nullable String unit) {
+    public void addProperties(String propName, String instance, String unit) {
         YandexAliceProperties prop = new YandexAliceProperties(propName, instance, unit);
+        this.properties.add(prop);
+    }
+
+    public void addProperties(String propName, String instance) {
+        YandexAliceProperties prop = new YandexAliceProperties(propName, instance);
         this.properties.add(prop);
     }
 

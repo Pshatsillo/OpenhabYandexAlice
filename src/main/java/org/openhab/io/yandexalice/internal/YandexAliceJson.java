@@ -17,8 +17,10 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
+import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.types.State;
@@ -69,17 +71,32 @@ public class YandexAliceJson {
     }
 
     public void setDeviceID(@Nullable YandexDevice yaDevice) {
-        assert yaDevice != null;
-        returnRequest.getJSONObject("payload").getJSONArray("devices")
-                .put(new JSONObject().put("id", yaDevice.getId()));
+        if (yaDevice != null) {
+            returnRequest.getJSONObject("payload").getJSONArray("devices")
+                    .put(new JSONObject().put("id", yaDevice.getId()));
+        }
     }
 
     public void addCapabilities(YandexDevice yaDev) {
         JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
         JSONArray caps = new JSONArray();
         for (YandexAliceCapabilities cp : yaDev.getCapabilities()) {
-            caps.put(new JSONObject().put("type", cp.getCapabilityName()).put("parameters", new JSONObject())
-                    .put("retrievable", true).put("reportable", true));
+            if (cp.capabilityName.equals(YandexDevice.CAP_RANGE)) {
+                caps.put(new JSONObject().put("type", cp.getCapabilityName()).put("parameters",
+                        new JSONObject().put("instance", cp.getInstance())
+                                .put("range",
+                                        new JSONObject().put("min", cp.getMinRange()).put("max", cp.getMaxRange())
+                                                .put("precision", cp.getPrecision()))
+                                .put("unit", cp.getUnit()))
+                        .put("retrievable", true).put("reportable", true));
+            } else if (cp.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+                caps.put(new JSONObject().put("type", cp.getCapabilityName())
+                        .put("parameters", new JSONObject().put("color_model", "hsv")).put("retrievable", true)
+                        .put("reportable", true));
+            } else {
+                caps.put(new JSONObject().put("type", cp.getCapabilityName()).put("parameters", new JSONObject())
+                        .put("retrievable", true).put("reportable", true));
+            }
         }
         for (int i = 0; i < device.length(); i++) {
             String capID = device.getJSONObject(i).get("id").toString();
@@ -129,6 +146,19 @@ public class YandexAliceJson {
             returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
                     new JSONArray().put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
                             new JSONObject().put("instance", capability.getInstance()).put("value", status))));
+        } else if (state instanceof HSBType) {
+            log.debug("HSB");
+            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
+                    new JSONArray().put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                            new JSONObject().put("instance", "hsv").put("value",
+                                    new JSONObject().put("h", ((HSBType) state).getHue())
+                                            .put("s", ((HSBType) state).getSaturation())
+                                            .put("v", ((HSBType) state).getBrightness())))));
+        } else if (state instanceof PercentType) {
+            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
+                    new JSONArray().put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                            new JSONObject().put("instance", capability.getInstance()).put("value",
+                                    ((PercentType) state).intValue()))));
         }
     }
 
@@ -153,7 +183,7 @@ public class YandexAliceJson {
                     new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state", new JSONObject()
                             .put("instance", prop.getInstance()).put("value", ((Number) state).doubleValue()))));
         } else if (state instanceof OpenClosedType) {
-            String st = "";
+            String st;
             if (state.toString().equals("CLOSED")) {
                 st = "closed";
             } else {
@@ -195,7 +225,7 @@ public class YandexAliceJson {
                 }
             }
         } else if ((state instanceof OpenClosedType)) {
-            String st = "";
+            String st;
             if (state.toString().equals("CLOSED")) {
                 st = "closed";
             } else {
