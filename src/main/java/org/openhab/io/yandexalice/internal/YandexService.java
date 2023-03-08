@@ -421,8 +421,16 @@ public class YandexService implements EventSubscriber {
                         yandexDevicesList.put(item.getName(), yDev);
                     } else if (item instanceof ContactItem) {
                         if ((item.hasTag("Door")) || (item.hasTag("GarageDoor")) || (item.hasTag("FrontDoor"))
-                                || (item.hasTag("CellarDoor")) || (item.hasTag("SideDoor")) || (item.hasTag("BackDoor"))
-                                || (item.hasTag("Blinds")) || (item.hasTag("Window"))) {
+                                || (item.hasTag("CellarDoor")) || (item.hasTag("SideDoor"))
+                                || (item.hasTag("BackDoor"))) {
+                            YandexDevice yDev = new YandexDevice(item.getName(),
+                                    Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_SENSOR_OPEN,
+                                    item.getState());
+                            json.createDevice(yDev);
+                            yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.INS_OPEN);
+                            json.addProperties(yDev);
+                            yandexDevicesList.put(item.getName(), yDev);
+                        } else if ((item.hasTag("Blinds")) || (item.hasTag("Window"))) {
                             YandexDevice yDev = new YandexDevice(item.getName(),
                                     Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_OPENABLE,
                                     item.getState());
@@ -448,23 +456,64 @@ public class YandexService implements EventSubscriber {
                         logger.debug("It`s a GROUP!");
                         GroupItem groupItem = (GroupItem) item;
                         Set<Item> grpMembers = groupItem.getAllMembers();
+                        var dev = new Object() {
+                            String devType = "";
+                        };
+                        YandexDevice.DEV_LIST.forEach((v) -> {
+                            for (String tag : groupItem.getTags()) {
+                                if (v.contains(tag)) {
+                                    dev.devType = v;
+                                }
+                            }
+                        });
+                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                dev.devType, item.getState());
+                        json.createDevice(yDev);
                         for (Item grpItem : grpMembers) {
                             if (grpItem.getType().equals("Switch")) {
-                                logger.debug("this is GROUP Switch ");
+                                if(grpItem.hasTag("toggle")){
+                                    logger.debug("this is GROUP Switch TOGGLE mode");
+                                } else {
+                                    logger.debug("this is GROUP Switch ON_OFF mode");
+                                    yDev.addCapabilities(YandexDevice.CAP_ON_OFF);
+                                }
                             } else if (grpItem.getType().equals("Number")) {
                                 logger.debug("this is GROUP Number ");
-                                /*
-                                 * {
-                                 * "type": "devices.properties.float",
-                                 * "retrievable": true,
-                                 * "parameters": {
-                                 * "instance": "pressure",
-                                 * "unit": "unit.pressure.bar"
-                                 * }
-                                 */
+                                Set<String> tags = grpItem.getTags();
+                                String capName = "";
+                                var ref = new Object() {
+                                    String instance = "";
+                                    String unit = "";
+                                };
+
+                                int minRange = 0, maxRange = 0, precision = 0;
+                                for (String tag :
+                                        tags) {
+                                    if (tag.contains(YandexDevice.CAP_RANGE)){
+                                        capName = YandexDevice.CAP_RANGE;
+                                    } else if(tag.contains("min=")){
+                                        minRange = Integer.parseInt(tag.split("=")[1]);
+                                    } else if(tag.contains("max=")){
+                                        maxRange = Integer.parseInt(tag.split("=")[1]);
+                                    } else if(tag.contains("step=")){
+                                        precision = Integer.parseInt(tag.split("=")[1]);
+                                    }
+                                    YandexDevice.RANGE_LIST.forEach((v) -> {
+                                            if (v.contains(tag)) {
+                                                ref.instance = v;
+                                                if(v.equals(YandexDevice.RANGE_TEMPERATURE)){
+                                                    ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
+                                                }
+                                            }
+                                    });
+                                }
+                                yDev.addCapabilities(capName, ref.instance, ref.unit, minRange,maxRange,precision);
                             }
                         }
-                        logger.debug("It`s a list {} !", grpMembers);
+
+                        json.addCapabilities(yDev);
+                        json.addProperties(yDev);
+                        yandexDevicesList.put(item.getName(), yDev);
                     }
                 }
             }

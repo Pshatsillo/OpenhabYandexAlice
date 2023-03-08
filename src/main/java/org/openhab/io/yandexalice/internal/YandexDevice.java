@@ -13,6 +13,7 @@
 package org.openhab.io.yandexalice.internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -36,7 +37,9 @@ public class YandexDevice {
     public static final String DEV_SWITCH = "devices.types.switch";
     public static final String DEV_LIGHT = "devices.types.light";
     public static final String DEV_OPENABLE = "devices.types.openable";
+    public static final String DEV_SENSOR_OPEN = "devices.types.sensor.open";
     public static final String DEV_CURTAIN = "devices.types.openable.curtain";
+    public static final String DEV_THERMOSTAT = "devices.types.thermostat";
     public static final String INS_TEMP = "temperature";
     public static final String INS_HUMIDITY = "humidity";
     public static final String INS_CO2 = "co2_level";
@@ -44,6 +47,16 @@ public class YandexDevice {
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     public static final String CAP_COLOR_SETTINGS = "devices.capabilities.color_setting";
     public static final String CAP_RANGE = "devices.capabilities.range";
+    public static final String RANGE_BRIGHTNESS = "brightness";
+    public static final String RANGE_CHANNEL = "channel";
+    public static final String RANGE_HUMIDITY = "humidity";
+    public static final String RANGE_OPEN="open";
+    public static final String RANGE_TEMPERATURE="temperature";
+    public static final String RANGE_VOLUME="volume";
+    public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
+            DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT);
+    public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS,RANGE_CHANNEL,RANGE_HUMIDITY,RANGE_OPEN, RANGE_TEMPERATURE,
+            RANGE_VOLUME);
     private final String id;
     private final String name;
     private final String type;

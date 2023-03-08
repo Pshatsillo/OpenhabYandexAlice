@@ -55,8 +55,14 @@
 | (Item) Number (Semantic) CO2         | devices.types.sensor/ devices.properties.float/           co2_level        |   Отображение показаний уровня углекислого газа.|
 | (Item) Color                         | devices.types.light/ devices.capabilities.color_setting                    |  Управление цветом для светящихся элементов в устройстве   |
 | (Item) Dimmer                        | devices.types.light/                            devices.capabilities.range |  Изменение яркости световых элементов.   |
-|                                      |                                                                            |     |
-|                                      |                                                                            |     |
-|                                      |                                                                            |     |
-|                                      |                                                                            |     |
+| (Item) RolleRshutter                 |   devices.types.openable.curtain                                                   |  Шторы, жалюзи.   |
+
+## **Составные устройства**
+
+
+1. Создаём Item Group и в тэге указываем что за устройство, исходя из [списка](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/device-types.html)
+2. Добавляем нужные нам Items, указываем нужные тэги.
+   * Тэги указываем по [умениям](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/capability-types.html) или [свойствам](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/properties-types.html)
+   * Если тэгов нет, то будут применяться свойства по умолчанию
+
 
