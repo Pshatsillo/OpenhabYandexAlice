@@ -51,6 +51,7 @@ import org.openhab.core.library.items.ColorItem;
 import org.openhab.core.library.items.ContactItem;
 import org.openhab.core.library.items.DimmerItem;
 import org.openhab.core.library.items.NumberItem;
+import org.openhab.core.library.items.RollershutterItem;
 import org.openhab.core.library.items.SwitchItem;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.HSBType;
@@ -133,18 +134,20 @@ public class YandexService implements EventSubscriber {
         if (itemRegistry != null) {
             Collection<Item> itemsList = Objects.requireNonNull(itemRegistry).getItems();
             for (Item item : itemsList) {
-                if ((item.getState() instanceof DecimalType) || (item.getState() instanceof QuantityType)) {
-                    YandexDevice yaDev = yandexDevicesList.get(item.getName());
-                    if (yaDev != null) {
-                        eventJson.setDeviceID(yaDev);
-                        yaDev.getProperties()
-                                .forEach((property) -> eventJson.addPropertyState(yaDev, property, item.getState()));
-                        yaDev.getCapabilities()
-                                .forEach((cap) -> eventJson.addCapabilityState(yaDev, cap, item.getState()));
+                if (!(item.getState() instanceof PercentType)) {
+                    if ((item.getState() instanceof DecimalType) || (item.getState() instanceof QuantityType)) {
+                        YandexDevice yaDev = yandexDevicesList.get(item.getName());
+                        if (yaDev != null) {
+                            eventJson.setDeviceID(yaDev);
+                            yaDev.getProperties().forEach(
+                                    (property) -> eventJson.addPropertyState(yaDev, property, item.getState()));
+                            yaDev.getCapabilities()
+                                    .forEach((cap) -> eventJson.addCapabilityState(yaDev, cap, item.getState()));
+                        }
+                        updateCallback(eventJson.returnRequest.toString());
                     }
                 }
             }
-            updateCallback(eventJson.returnRequest.toString());
         }
     }
 
@@ -428,6 +431,19 @@ public class YandexService implements EventSubscriber {
                             json.addProperties(yDev);
                             yandexDevicesList.put(item.getName(), yDev);
                         }
+                    } else if (item instanceof RollershutterItem) {
+                        logger.debug("RollerShutter");
+                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                YandexDevice.DEV_CURTAIN, item.getState());
+                        json.createDevice(yDev);
+                        yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.INS_OPEN);
+                        yDev.addCapabilities(YandexDevice.CAP_RANGE, YandexDevice.INS_OPEN, YandexDevice.UNIT_PERCENT,
+                                0, 100, 1);
+                        // yDev.addCapabilities(YandexDevice.CAP_ON_OFF);
+                        json.addProperties(yDev);
+                        json.addCapabilities(yDev);
+                        yandexDevicesList.put(item.getName(), yDev);
+
                     } else if (item instanceof GroupItem) {
                         logger.debug("It`s a GROUP!");
                         GroupItem groupItem = (GroupItem) item;

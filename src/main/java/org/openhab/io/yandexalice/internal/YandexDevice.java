@@ -87,6 +87,16 @@ public class YandexDevice {
         capabilities.add(cp);
     }
 
+    public void addCapabilities(String capability, String instance, String unit, int minRange, int maxRange,
+            int precision) {
+        YandexAliceCapabilities cp = new YandexAliceCapabilities();
+        cp.addCapability(capability);
+        cp.setInstance(instance);
+        cp.setUnit(unit);
+        cp.setRange(minRange, maxRange, precision);
+        capabilities.add(cp);
+    }
+
     public List<YandexAliceCapabilities> getCapabilities() {
         return capabilities;
     }

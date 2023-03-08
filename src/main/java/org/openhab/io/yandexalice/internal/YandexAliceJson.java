@@ -135,11 +135,19 @@ public class YandexAliceJson {
     }
 
     public void addCapabilityState(YandexAliceCapabilities capability, State state) {
+        JSONArray caps;
+        if (returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).isNull("capabilities")) {
+            caps = new JSONArray();
+            log.debug("cap is empty");
+        } else {
+            caps = returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0)
+                    .getJSONArray("capabilities");
+            log.debug("cap is {}", caps);
+        }
         if (state instanceof OnOffType) {
             boolean status = state.equals(OnOffType.ON);
-            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
-                    new JSONArray().put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
-                            new JSONObject().put("instance", capability.getInstance()).put("value", status))));
+            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                    new JSONObject().put("instance", capability.getInstance()).put("value", status)));
         } else if (state instanceof HSBType) {
             log.debug("HSB");
             returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
@@ -149,11 +157,16 @@ public class YandexAliceJson {
                                             .put("s", ((HSBType) state).getSaturation())
                                             .put("v", ((HSBType) state).getBrightness())))));
         } else if (state instanceof PercentType) {
-            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
-                    new JSONArray().put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
-                            new JSONObject().put("instance", capability.getInstance()).put("value",
-                                    ((PercentType) state).intValue()))));
+            if (capability.getCapabilityName().equals(YandexDevice.CAP_ON_OFF)) {
+                boolean status = ((PercentType) state).intValue() > 0;
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", capability.getInstance()).put("value", status)));
+            } else {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
+                        .put("instance", capability.getInstance()).put("value", ((PercentType) state).intValue())));
+            }
         }
+        returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities", caps);
     }
 
     public void addCapabilityState(YandexDevice yaDev, YandexAliceCapabilities cap, State state) {
@@ -172,10 +185,30 @@ public class YandexAliceJson {
     }
 
     public void addPropertyState(YandexAliceProperties prop, State state) {
+        JSONArray props;
+        if (returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).isNull("properties")) {
+            props = new JSONArray();
+            log.debug("prop is empty");
+        } else {
+            props = returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0)
+                    .getJSONArray("properties");
+            log.debug("prop is {}", props);
+        }
+
         if ((state instanceof DecimalType) || (state instanceof QuantityType)) {
-            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties",
-                    new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state", new JSONObject()
-                            .put("instance", prop.getInstance()).put("value", ((Number) state).doubleValue()))));
+            if (prop.getInstance().equals(YandexDevice.INS_OPEN)) {
+                String st;
+                if (((Number) state).intValue() == 0) {
+                    st = "closed";
+                } else {
+                    st = "opened";
+                }
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                        new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+            } else {
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state", new JSONObject()
+                        .put("instance", prop.getInstance()).put("value", ((Number) state).doubleValue())));
+            }
         } else if (state instanceof OpenClosedType) {
             String st;
             if (state.toString().equals("CLOSED")) {
@@ -183,10 +216,10 @@ public class YandexAliceJson {
             } else {
                 st = "opened";
             }
-            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties",
-                    new JSONArray().put(new JSONObject().put("type", prop.getPropName()).put("state",
-                            new JSONObject().put("instance", prop.getInstance()).put("value", st))));
+            props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                    new JSONObject().put("instance", prop.getInstance()).put("value", st)));
         }
+        returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties", props);
     }
 
     public void addPropertyState(YandexAliceProperties prop, double intState) {
