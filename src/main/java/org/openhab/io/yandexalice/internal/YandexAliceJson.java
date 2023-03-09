@@ -165,6 +165,9 @@ public class YandexAliceJson {
                 caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
                         .put("instance", capability.getInstance()).put("value", ((PercentType) state).intValue())));
             }
+        } else if (state instanceof DecimalType) {
+            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
+                    .put("instance", capability.getInstance()).put("value", ((Number) state).doubleValue())));
         }
         returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities", caps);
     }

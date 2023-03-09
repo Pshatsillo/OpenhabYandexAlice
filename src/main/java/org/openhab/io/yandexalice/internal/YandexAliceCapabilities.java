@@ -27,10 +27,20 @@ public class YandexAliceCapabilities {
     private int precisionRange;
     private int maxRange;
     private int minRange;
+    private String ohID;
 
     public YandexAliceCapabilities() {
         instance = "";
         unit = "";
+        ohID = "";
+    }
+
+    public String getOhID() {
+        return ohID;
+    }
+
+    public void setOhID(String ohID) {
+        this.ohID = ohID;
     }
 
     public void addCapability(String capability) {

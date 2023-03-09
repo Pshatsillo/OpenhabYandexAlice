@@ -50,13 +50,13 @@ public class YandexDevice {
     public static final String RANGE_BRIGHTNESS = "brightness";
     public static final String RANGE_CHANNEL = "channel";
     public static final String RANGE_HUMIDITY = "humidity";
-    public static final String RANGE_OPEN="open";
-    public static final String RANGE_TEMPERATURE="temperature";
-    public static final String RANGE_VOLUME="volume";
+    public static final String RANGE_OPEN = "open";
+    public static final String RANGE_TEMPERATURE = "temperature";
+    public static final String RANGE_VOLUME = "volume";
     public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
             DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT);
-    public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS,RANGE_CHANNEL,RANGE_HUMIDITY,RANGE_OPEN, RANGE_TEMPERATURE,
-            RANGE_VOLUME);
+    public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS, RANGE_CHANNEL, RANGE_HUMIDITY,
+            RANGE_OPEN, RANGE_TEMPERATURE, RANGE_VOLUME);
     private final String id;
     private final String name;
     private final String type;
@@ -80,8 +80,9 @@ public class YandexDevice {
         this.state = state;
     }
 
-    public void addCapabilities(String capability) {
+    public void addCapabilities(String ohID, String capability) {
         YandexAliceCapabilities cp = new YandexAliceCapabilities();
+        cp.setOhID(ohID);
         switch (capability) {
             case CAP_ON_OFF:
                 cp.addCapability(capability);
@@ -100,13 +101,14 @@ public class YandexDevice {
         capabilities.add(cp);
     }
 
-    public void addCapabilities(String capability, String instance, String unit, int minRange, int maxRange,
-            int precision) {
+    public void addCapabilities(String ohID, String capability, String instance, String unit, int minRange,
+            int maxRange, int precision) {
         YandexAliceCapabilities cp = new YandexAliceCapabilities();
         cp.addCapability(capability);
         cp.setInstance(instance);
         cp.setUnit(unit);
         cp.setRange(minRange, maxRange, precision);
+        cp.setOhID(ohID);
         capabilities.add(cp);
     }
 
@@ -126,8 +128,8 @@ public class YandexDevice {
         return type;
     }
 
-    public void addProperties(String propName, String instance, String unit) {
-        YandexAliceProperties prop = new YandexAliceProperties(propName, instance, unit);
+    public void addProperties(String ohItemID, String propName, String instance, String unit) {
+        YandexAliceProperties prop = new YandexAliceProperties(ohItemID, propName, instance, unit);
         this.properties.add(prop);
     }
 

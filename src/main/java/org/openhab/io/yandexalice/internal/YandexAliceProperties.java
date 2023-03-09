@@ -26,19 +26,24 @@ public class YandexAliceProperties {
     String propName;
     String instance;
     String unit = "";
+    String ohItemID = "";
     JSONArray events = new JSONArray();
 
-    public YandexAliceProperties(String propName, String instance, String unit) {
+    public YandexAliceProperties(String ohItemID, String propName, String instance, String unit) {
         this.propName = propName;
         this.instance = instance;
         this.unit = unit;
-
+        this.ohItemID = ohItemID;
         if (propName.equals(YandexDevice.PROP_EVENT)) {
             if (instance.equals(YandexDevice.INS_OPEN)) {
                 events = new JSONArray().put(new JSONObject().put("value", "opened"))
                         .put(new JSONObject().put("value", "closed"));
             }
         }
+    }
+
+    public String getOhItemID() {
+        return ohItemID;
     }
 
     public YandexAliceProperties(String propName, String instance) {
