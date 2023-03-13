@@ -20,6 +20,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -350,7 +351,9 @@ public class YandexService implements EventSubscriber {
                                 }
                             }
                             for (YandexAliceProperties prop : yDev.getProperties()) {
-                                aliceJson.addPropertyState(prop, itemGrp.getState());
+                                if (prop.getOhID().equals(itemGrp.getName())) {
+                                    aliceJson.addPropertyState(prop, itemGrp.getState());
+                                }
                             }
                         }
                     }
@@ -490,7 +493,7 @@ public class YandexService implements EventSubscriber {
                                     logger.debug("this is GROUP Switch ON_OFF mode");
                                     yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_ON_OFF);
                                 }
-                            } else if (grpItem.getType().equals("Number")) {
+                            } else if (grpItem instanceof NumberItem) {
                                 logger.debug("this is GROUP Number ");
                                 Set<String> tags = grpItem.getTags();
                                 String capName = "";
@@ -515,6 +518,19 @@ public class YandexService implements EventSubscriber {
                                             ref.instance = v;
                                             if (v.equals(YandexDevice.RANGE_TEMPERATURE)) {
                                                 ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
+                                            } else if (v.equals(YandexDevice.RANGE_BRIGHTNESS)) {
+                                                ref.unit = YandexDevice.UNIT_PERCENT;
+                                            } else if (v.equals(YandexDevice.RANGE_CHANNEL)) {
+                                                ref.unit = "";
+                                            } else if (v.equals(YandexDevice.RANGE_HUMIDITY)) {
+                                                ref.unit = YandexDevice.UNIT_PERCENT;
+                                            } else if (v.equals(YandexDevice.RANGE_OPEN)) {
+                                                ref.unit = YandexDevice.UNIT_PERCENT;
+                                            } else if (v.equals(YandexDevice.RANGE_VOLUME)) {
+                                                if (tag.equals("percent")) {
+                                                    ref.unit = YandexDevice.UNIT_PERCENT;
+                                                } else
+                                                    ref.unit = "";
                                             }
                                         }
                                     });
@@ -551,6 +567,7 @@ public class YandexService implements EventSubscriber {
             String id = dev.getString("id");
             JSONArray capabilities = dev.getJSONArray("capabilities");
             JSONObject state = capabilities.getJSONObject(0).getJSONObject("state");
+            String type = capabilities.getJSONObject(0).getString("type");
             if ((itemRegistry != null) && (eventPublisher != null)) {
                 Item item = Objects.requireNonNull(itemRegistry).getItem(id);
                 if (item instanceof ColorItem) {
@@ -570,6 +587,34 @@ public class YandexService implements EventSubscriber {
                         Objects.requireNonNull(eventPublisher)
                                 .post(ItemEventFactory.createCommandEvent(id, OnOffType.OFF));
                     }
+                } else if (item instanceof GroupItem) {
+                    GroupItem groupItem = (GroupItem) item;
+                    Set<Item> grpMembers = groupItem.getAllMembers();
+                    YandexDevice yaDev = yandexDevicesList.get(item.getName());
+                    for (Item grpItem : grpMembers) {
+                        logger.debug("group item is {} yaDev {}", grpItem.getName(), yaDev.getName());
+                        List<YandexAliceCapabilities> caps = yaDev.getCapabilities();
+                        if (grpItem instanceof SwitchItem) {
+                            for (YandexAliceCapabilities cp : caps) {
+                                if (cp.getCapabilityName().equals(type)) {
+                                    boolean value = state.getBoolean("value");
+                                    if (value) {
+                                        Objects.requireNonNull(eventPublisher)
+                                                .post(ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.ON));
+                                    } else {
+                                        Objects.requireNonNull(eventPublisher)
+                                                .post(ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.OFF));
+                                    }
+                                }
+                            }
+                        } else if(grpItem instanceof NumberItem){
+                            for (YandexAliceCapabilities cp : caps) {
+                                if (cp.getCapabilityName().equals(type)) {
+                                    //TODO Number parsing
+                                }
+                            }
+                        }
+                    }
                 }
                 JSONObject payload = new JSONObject();
                 JSONArray devices = new JSONArray();
@@ -577,8 +622,7 @@ public class YandexService implements EventSubscriber {
                 answer.put("request_id", header);
                 JSONObject itemJson = new JSONObject();
                 itemJson.put("id", item.getName());
-                JSONArray caps = getCapabilitiesState(item, "DONE");
-                itemJson.put("capabilities", caps);
+                itemJson.put("action_result", new JSONObject().put("status", "DONE"));
                 devices.put(itemJson);
                 payload.put("devices", devices);
             }

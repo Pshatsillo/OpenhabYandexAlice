@@ -42,7 +42,7 @@ public class YandexAliceProperties {
         }
     }
 
-    public String getOhItemID() {
+    public String getOhID() {
         return ohItemID;
     }
 
