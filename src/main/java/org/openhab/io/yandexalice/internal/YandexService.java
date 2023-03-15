@@ -519,21 +519,24 @@ public class YandexService implements EventSubscriber {
                                     YandexDevice.RANGE_LIST.forEach((v) -> {
                                         if (v.contains(tag.toLowerCase())) {
                                             ref.instance = v;
-                                            if (v.equals(YandexDevice.RANGE_TEMPERATURE)) {
-                                                ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
-                                            } else if (v.equals(YandexDevice.RANGE_BRIGHTNESS)) {
-                                                ref.unit = YandexDevice.UNIT_PERCENT;
-                                            } else if (v.equals(YandexDevice.RANGE_CHANNEL)) {
-                                                ref.unit = "";
-                                            } else if (v.equals(YandexDevice.RANGE_HUMIDITY)) {
-                                                ref.unit = YandexDevice.UNIT_PERCENT;
-                                            } else if (v.equals(YandexDevice.RANGE_OPEN)) {
-                                                ref.unit = YandexDevice.UNIT_PERCENT;
-                                            } else if (v.equals(YandexDevice.RANGE_VOLUME)) {
-                                                if ("percent".equals(tag)) {
+                                            switch (v) {
+                                                case YandexDevice.RANGE_TEMPERATURE:
+                                                    ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
+                                                    break;
+                                                case YandexDevice.RANGE_BRIGHTNESS:
+                                                case YandexDevice.RANGE_HUMIDITY:
+                                                case YandexDevice.RANGE_OPEN:
                                                     ref.unit = YandexDevice.UNIT_PERCENT;
-                                                } else
+                                                    break;
+                                                case YandexDevice.RANGE_CHANNEL:
                                                     ref.unit = "";
+                                                    break;
+                                                case YandexDevice.RANGE_VOLUME:
+                                                    if ("percent".equals(tag)) {
+                                                        ref.unit = YandexDevice.UNIT_PERCENT;
+                                                    } else
+                                                        ref.unit = "";
+                                                    break;
                                             }
                                         }
                                     });
@@ -557,10 +560,39 @@ public class YandexService implements EventSubscriber {
                                 for (String tag : tags) {
                                     if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
                                         capName = YandexDevice.CAP_MODE;
-                                    }
-                                    if (tag.equalsIgnoreCase(YandexDevice.MODE_HEAT)) {
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_CLEANUP)) {
+                                        instance = YandexDevice.MODE_CLEANUP;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_CLEANUP);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_COFFEE)) {
+                                        instance = YandexDevice.MODE_COFFEE;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_COFFEE);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_DISHWASHING)) {
+                                        instance = YandexDevice.MODE_DISHWASHING;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_DISHWASHING);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_FAN_SPEED)) {
+                                        instance = YandexDevice.MODE_FAN_SPEED;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_FAN_SPEED);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_HEAT)) {
                                         instance = YandexDevice.MODE_HEAT;
                                         modesCol = new ArrayList<>(YandexDevice.DEFAULT_HEAT);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_INPUT_SOURCE)) {
+                                        instance = YandexDevice.MODE_INPUT_SOURCE;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_INPUT_SOURCE);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_PROGRAM)) {
+                                        instance = YandexDevice.MODE_PROGRAM;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_PROGRAM);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_SWING)) {
+                                        instance = YandexDevice.MODE_SWING;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_SWING);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_THERMOSTAT)) {
+                                        instance = YandexDevice.MODE_THERMOSTAT;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_THERMOSTAT);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_TEA)) {
+                                        instance = YandexDevice.MODE_TEA;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_TEA);
+                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_WORK_SPEED)) {
+                                        instance = YandexDevice.MODE_WORK_SPEED;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_WORK_SPEED);
                                     } else if (tag.toLowerCase().startsWith("-")) {
                                         YandexDevice.OPER_LIST.forEach((ops) -> {
                                             if (ops.equals(tag.toLowerCase().substring(1))) {

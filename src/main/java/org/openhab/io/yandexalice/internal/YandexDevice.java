@@ -40,6 +40,26 @@ public class YandexDevice {
     public static final String DEV_SENSOR_OPEN = "devices.types.sensor.open";
     public static final String DEV_CURTAIN = "devices.types.openable.curtain";
     public static final String DEV_THERMOSTAT = "devices.types.thermostat";
+    public static final String DEV_MEDIA_DEVICE = "devices.types.media_device";
+    public static final String DEV_TV = "devices.types.media_device.tv";
+    public static final String DEV_TV_BOX = "devices.types.media_device.tv_box";
+    public static final String DEV_RECEIVER = "devices.types.media_device.receiver";
+    public static final String DEV_HUMIDIFIER = "devices.types.humidifier";
+    public static final String DEV_PURIFIER = "devices.types.purifier";
+    public static final String DEV_VACUUM_CLEANER = "devices.types.vacuum_cleaner";
+    public static final String DEV_WASHING_MACHINE = "devices.types.washing_machine";
+    public static final String DEV_DISHWASHER = "devices.types.dishwasher";
+    public static final String DEV_IRON = "devices.types.iron";
+    public static final String DEV_SENSOR_VIBRATION = "devices.types.sensor.vibration";
+    public static final String DEV_SENSOR_ILLUMINATION = "devices.types.sensor.illumination";
+    public static final String DEV_SENSOR_CLIMATE = "devices.types.sensor.climate";
+    public static final String DEV_SENSOR_WATER_LEAK = "devices.types.sensor.water_leak";
+    public static final String DEV_SENSOR_BUTTON = "devices.types.sensor.button";
+    public static final String DEV_SENSOR_GAS = "devices.types.sensor.gas";
+    public static final String DEV_SENSOR_SMOKE = "devices.types.sensor.smoke";
+    public static final String DEV_PET_DRINKING_FOUNTAIN = "devices.types.pet_drinking_fountain";
+    public static final String DEV_PET_FEEDER = "devices.types.pet_feeder";
+    public static final String DEV_OTHER = "devices.types.sensor.other";
     public static final String INS_TEMP = "temperature";
     public static final String INS_HUMIDITY = "humidity";
     public static final String INS_CO2 = "co2_level";
@@ -54,7 +74,17 @@ public class YandexDevice {
     public static final String RANGE_OPEN = "open";
     public static final String RANGE_TEMPERATURE = "temperature";
     public static final String RANGE_VOLUME = "volume";
+    public static final String MODE_CLEANUP = "cleanup_mode";
+    public static final String MODE_COFFEE = "coffee_mode";
+    public static final String MODE_DISHWASHING = "dishwashing";
+    public static final String MODE_FAN_SPEED = "fan_speed";
     public static final String MODE_HEAT = "heat";
+    public static final String MODE_INPUT_SOURCE = "input_source";
+    public static final String MODE_PROGRAM = "program";
+    public static final String MODE_SWING = "swing";
+    public static final String MODE_TEA = "tea_mode";
+    public static final String MODE_THERMOSTAT = "thermostat";
+    public static final String MODE_WORK_SPEED = "work_speed";
     public static final String OPER_AUTO = "auto";
     public static final String OPER_MAX = "max";
     public static final String OPER_MIN = "min";
@@ -88,16 +118,32 @@ public class YandexDevice {
     public static final String OPER_NINE = "nine";
     public static final String OPER_TEN = "ten";
     public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
-            DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT);
+            DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT, DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX,
+            DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER, DEV_VACUUM_CLEANER, DEV_WASHING_MACHINE, DEV_DISHWASHER,
+            DEV_IRON, DEV_SENSOR_VIBRATION, DEV_SENSOR_ILLUMINATION, DEV_SENSOR_CLIMATE, DEV_SENSOR_WATER_LEAK,
+            DEV_SENSOR_BUTTON, DEV_SENSOR_GAS, DEV_SENSOR_SMOKE, DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_OTHER);
     public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS, RANGE_CHANNEL, RANGE_HUMIDITY,
             RANGE_OPEN, RANGE_TEMPERATURE, RANGE_VOLUME);
     public static final Collection<String> OPER_LIST = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO,
             OPER_ECO, OPER_SMART, OPER_PREHEAT, OPER_HEAT, OPER_FAN_ONLY, OPER_DRY, OPER_COOL, OPER_MEDIUM, OPER_LOW,
             OPER_HIGH, OPER_QUIET, OPER_EXPRESS, OPER_SLOW, OPER_FAST, OPER_VERTICAL, OPER_STATIONARY, OPER_HORIZONTAL,
-            OPER_ONE,OPER_TWO,OPER_THREE,OPER_FOUR,OPER_FIVE,OPER_SIX,OPER_SEVEN,OPER_EIGHT,OPER_NINE,OPER_TEN);
-
+            OPER_ONE, OPER_TWO, OPER_THREE, OPER_FOUR, OPER_FIVE, OPER_SIX, OPER_SEVEN, OPER_EIGHT, OPER_NINE,
+            OPER_TEN);
+    public static final Collection<String> DEFAULT_CLEANUP = List.of(OPER_AUTO);
+    public static final Collection<String> DEFAULT_COFFEE = List.of(OPER_AUTO);
+    public static final Collection<String> DEFAULT_DISHWASHING = List.of(OPER_AUTO);
+    public static final Collection<String> DEFAULT_FAN_SPEED = List.of(OPER_AUTO, OPER_HIGH, OPER_LOW, OPER_MEDIUM,
+            OPER_TURBO);
+    public static final Collection<String> DEFAULT_INPUT_SOURCE = List.of(OPER_ONE, OPER_TWO, OPER_THREE, OPER_FOUR);
+    public static final Collection<String> DEFAULT_PROGRAM = List.of(OPER_ONE, OPER_TWO, OPER_THREE, OPER_FOUR);
+    public static final Collection<String> DEFAULT_SWING = List.of(OPER_AUTO, OPER_HORIZONTAL, OPER_STATIONARY,
+            OPER_VERTICAL);
+    public static final Collection<String> DEFAULT_THERMOSTAT = List.of(OPER_AUTO, OPER_COOL, OPER_DRY, OPER_FAN_ONLY,
+            OPER_HEAT, OPER_PREHEAT);
+    public static final Collection<String> DEFAULT_TEA = List.of(OPER_AUTO);
+    public static final Collection<String> DEFAULT_WORK_SPEED = List.of(OPER_AUTO, OPER_FAST, OPER_MAX, OPER_MEDIUM,
+            OPER_MIN, OPER_SLOW, OPER_TURBO);
     public static Collection<String> DEFAULT_HEAT = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO);
-
     private final String id;
     private final String name;
     private final String type;
