@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +54,7 @@ import org.openhab.core.library.items.ContactItem;
 import org.openhab.core.library.items.DimmerItem;
 import org.openhab.core.library.items.NumberItem;
 import org.openhab.core.library.items.RollershutterItem;
+import org.openhab.core.library.items.StringItem;
 import org.openhab.core.library.items.SwitchItem;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.HSBType;
@@ -60,6 +62,7 @@ import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.types.State;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -527,7 +530,7 @@ public class YandexService implements EventSubscriber {
                                             } else if (v.equals(YandexDevice.RANGE_OPEN)) {
                                                 ref.unit = YandexDevice.UNIT_PERCENT;
                                             } else if (v.equals(YandexDevice.RANGE_VOLUME)) {
-                                                if (tag.equals("percent")) {
+                                                if ("percent".equals(tag)) {
                                                     ref.unit = YandexDevice.UNIT_PERCENT;
                                                 } else
                                                     ref.unit = "";
@@ -542,9 +545,47 @@ public class YandexService implements EventSubscriber {
                                     yDev.addCapabilities(grpItem.getName(), capName, ref.instance, ref.unit, minRange,
                                             maxRange, precision);
                                 }
+                            } else if (grpItem instanceof StringItem) {
+                                String capName = "";
+                                String instance = "";
+                                logger.debug("This is string");
+                                // TODO Modes select
+                                Set<String> tags = grpItem.getTags();
+                                Collection<String> modesCol = null;
+                                ArrayList<String> toRemove = new ArrayList<>();
+                                ArrayList<String> toAdd = new ArrayList<>();
+                                for (String tag : tags) {
+                                    if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
+                                        capName = YandexDevice.CAP_MODE;
+                                    }
+                                    if (tag.equalsIgnoreCase(YandexDevice.MODE_HEAT)) {
+                                        instance = YandexDevice.MODE_HEAT;
+                                        modesCol = new ArrayList<>(YandexDevice.DEFAULT_HEAT);
+                                    } else if (tag.toLowerCase().startsWith("-")) {
+                                        YandexDevice.OPER_LIST.forEach((ops) -> {
+                                            if (ops.equals(tag.toLowerCase().substring(1))) {
+                                                toRemove.add(tag.toLowerCase().substring(1));
+                                            }
+                                        });
+                                    } else if (tag.toLowerCase().startsWith("+")) {
+                                        YandexDevice.OPER_LIST.forEach((ops) -> {
+                                            if (ops.equals(tag.toLowerCase().substring(1))) {
+                                                toAdd.add(tag.toLowerCase().substring(1));
+                                            }
+                                        });
+                                    }
+                                }
+                                if (modesCol != null) {
+                                    modesCol.addAll(toAdd);
+                                    modesCol.removeAll(toRemove);
+                                    logger.warn("Group init complete. modesCol: {}, toRemove {}, toAdd {}", modesCol,
+                                            toRemove, toAdd);
+                                    yDev.addCapabilities(grpItem.getName(), capName, instance, modesCol);
+                                } else {
+                                    logger.debug("modesCol is null!");
+                                }
                             }
                         }
-
                         json.addCapabilities(yDev);
                         json.addProperties(yDev);
                         yandexDevicesList.put(item.getName(), yDev);
@@ -591,27 +632,35 @@ public class YandexService implements EventSubscriber {
                     GroupItem groupItem = (GroupItem) item;
                     Set<Item> grpMembers = groupItem.getAllMembers();
                     YandexDevice yaDev = yandexDevicesList.get(item.getName());
-                    for (Item grpItem : grpMembers) {
-                        logger.debug("group item is {} yaDev {}", grpItem.getName(), yaDev.getName());
+                    if (yaDev != null) {
                         List<YandexAliceCapabilities> caps = yaDev.getCapabilities();
-                        if (grpItem instanceof SwitchItem) {
-                            for (YandexAliceCapabilities cp : caps) {
-                                if (cp.getCapabilityName().equals(type)) {
-                                    boolean value = state.getBoolean("value");
-                                    if (value) {
-                                        Objects.requireNonNull(eventPublisher)
-                                                .post(ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.ON));
-                                    } else {
-                                        Objects.requireNonNull(eventPublisher)
-                                                .post(ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.OFF));
+                        for (YandexAliceCapabilities cp : caps) {
+                            if (cp.getCapabilityName().equals(type)) {
+                                grpMembers.forEach((memItem) -> {
+                                    if (cp.getOhID().equals(memItem.getName())) {
+                                        logger.debug("item is {}", memItem.getName());
+                                        if (memItem instanceof SwitchItem) {
+                                            boolean value = state.getBoolean("value");
+                                            if (value) {
+                                                Objects.requireNonNull(eventPublisher).post(ItemEventFactory
+                                                        .createCommandEvent(cp.getOhID(), OnOffType.ON));
+                                            } else {
+                                                Objects.requireNonNull(eventPublisher).post(ItemEventFactory
+                                                        .createCommandEvent(cp.getOhID(), OnOffType.OFF));
+                                            }
+                                        } else if (memItem instanceof NumberItem) {
+                                            int value = state.getInt("value");
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
+                                                            DecimalType.valueOf(String.valueOf(value))));
+                                        } else if (memItem instanceof StringItem) {
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
+                                                            StringType.valueOf(state.getString("value"))));
+                                        }
                                     }
-                                }
-                            }
-                        } else if(grpItem instanceof NumberItem){
-                            for (YandexAliceCapabilities cp : caps) {
-                                if (cp.getCapabilityName().equals(type)) {
-                                    //TODO Number parsing
-                                }
+                                });
+
                             }
                         }
                     }
@@ -633,37 +682,37 @@ public class YandexService implements EventSubscriber {
         return answer.toString();
     }
 
-    private static JSONArray getCapabilitiesState(Item item, String status) {
-        JSONObject itemJson = new JSONObject();
-        JSONObject state = new JSONObject();
-        JSONArray capabilitiesArray = new JSONArray();
-        if (item instanceof ColorItem) {
-            JSONObject capabilitiesObj = new JSONObject();
-            capabilitiesObj.put("type", "devices.capabilities.color_setting");
-            state.put("instance", "hsv");
-            state.put("action_result", new JSONObject().put("status", status));
-            capabilitiesObj.put("state", state);
-            capabilitiesArray.put(capabilitiesObj);
-            itemJson.put("capabilities", capabilitiesArray);
-        } else if (item instanceof DimmerItem) {
-            JSONObject capabilitiesObj = new JSONObject();
-            capabilitiesObj.put("type", "devices.capabilities.range");
-            state.put("instance", "brightness");
-            state.put("action_result", new JSONObject().put("status", status));
-            capabilitiesObj.put("state", state);
-            capabilitiesArray.put(capabilitiesObj);
-            itemJson.put("capabilities", capabilitiesArray);
-        } else if (item instanceof SwitchItem) {
-            JSONObject capabilitiesObj = new JSONObject();
-            capabilitiesObj.put("type", "devices.capabilities.on_off");
-            state.put("instance", "on");
-            state.put("action_result", new JSONObject().put("status", status));
-            capabilitiesObj.put("state", state);
-            capabilitiesArray.put(capabilitiesObj);
-            itemJson.put("capabilities", capabilitiesArray);
-        }
-        return capabilitiesArray;
-    }
+    // private static JSONArray getCapabilitiesState(Item item, String status) {
+    // JSONObject itemJson = new JSONObject();
+    // JSONObject state = new JSONObject();
+    // JSONArray capabilitiesArray = new JSONArray();
+    // if (item instanceof ColorItem) {
+    // JSONObject capabilitiesObj = new JSONObject();
+    // capabilitiesObj.put("type", "devices.capabilities.color_setting");
+    // state.put("instance", "hsv");
+    // state.put("action_result", new JSONObject().put("status", status));
+    // capabilitiesObj.put("state", state);
+    // capabilitiesArray.put(capabilitiesObj);
+    // itemJson.put("capabilities", capabilitiesArray);
+    // } else if (item instanceof DimmerItem) {
+    // JSONObject capabilitiesObj = new JSONObject();
+    // capabilitiesObj.put("type", "devices.capabilities.range");
+    // state.put("instance", "brightness");
+    // state.put("action_result", new JSONObject().put("status", status));
+    // capabilitiesObj.put("state", state);
+    // capabilitiesArray.put(capabilitiesObj);
+    // itemJson.put("capabilities", capabilitiesArray);
+    // } else if (item instanceof SwitchItem) {
+    // JSONObject capabilitiesObj = new JSONObject();
+    // capabilitiesObj.put("type", "devices.capabilities.on_off");
+    // state.put("instance", "on");
+    // state.put("action_result", new JSONObject().put("status", status));
+    // capabilitiesObj.put("state", state);
+    // capabilitiesArray.put(capabilitiesObj);
+    // itemJson.put("capabilities", capabilitiesArray);
+    // }
+    // return capabilitiesArray;
+    // }
 
     @Deactivate
     protected void deactivate() {

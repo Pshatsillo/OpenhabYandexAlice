@@ -87,6 +87,11 @@ public class YandexAliceJson {
                 caps.put(new JSONObject().put("type", cp.getCapabilityName())
                         .put("parameters", new JSONObject().put("color_model", "hsv")).put("retrievable", true)
                         .put("reportable", true));
+            } else if (cp.capabilityName.equals(YandexDevice.CAP_MODE)) {
+                caps.put(new JSONObject().put("type", cp.getCapabilityName())
+                        .put("parameters",
+                                new JSONObject().put("instance", cp.getInstance()).put("modes", cp.getModes()))
+                        .put("retrievable", true).put("reportable", true));
             } else {
                 caps.put(new JSONObject().put("type", cp.getCapabilityName()).put("parameters", new JSONObject())
                         .put("retrievable", true).put("reportable", true));
@@ -168,6 +173,9 @@ public class YandexAliceJson {
         } else if (state instanceof DecimalType) {
             caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
                     .put("instance", capability.getInstance()).put("value", ((Number) state).doubleValue())));
+        } else if (state instanceof StringType) {
+            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                    new JSONObject().put("instance", capability.getInstance()).put("value", state.toString())));
         }
         returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities", caps);
     }

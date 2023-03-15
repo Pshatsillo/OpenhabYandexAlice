@@ -12,7 +12,11 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import java.util.Collection;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * The {@link YandexAliceCapabilities} model for Yandex capabilities
@@ -28,6 +32,17 @@ public class YandexAliceCapabilities {
     private int maxRange;
     private int minRange;
     private String ohID;
+    JSONArray modes = new JSONArray();
+
+    public JSONArray getModes() {
+        return modes;
+    }
+
+    public void setModes(Collection<String> modesList) {
+        JSONArray modes = new JSONArray();
+        modesList.forEach((md) -> modes.put(new JSONObject().put("value", md)));
+        this.modes = modes;
+    }
 
     public YandexAliceCapabilities() {
         instance = "";

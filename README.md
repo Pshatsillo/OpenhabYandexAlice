@@ -64,5 +64,6 @@
 2. Добавляем нужные нам Items, указываем нужные тэги.
    * Тэги указываем по [умениям](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/capability-types.html) или [свойствам](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/properties-types.html)
    * Если тэгов нет, то будут применяться свойства по умолчанию, а Number будет применять в качестве настроек [свойства](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/float.html) float
+   * [режимы](https://yandex.ru/dev/dialogs/smart-home/doc/concepts/mode-instance-modes.html) работы реализованы до американо, если нужно добавить какие-то свяжитесь со мной
 
 

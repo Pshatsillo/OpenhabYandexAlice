@@ -47,16 +47,57 @@ public class YandexDevice {
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     public static final String CAP_COLOR_SETTINGS = "devices.capabilities.color_setting";
     public static final String CAP_RANGE = "devices.capabilities.range";
+    public static final String CAP_MODE = "devices.capabilities.mode";
     public static final String RANGE_BRIGHTNESS = "brightness";
     public static final String RANGE_CHANNEL = "channel";
     public static final String RANGE_HUMIDITY = "humidity";
     public static final String RANGE_OPEN = "open";
     public static final String RANGE_TEMPERATURE = "temperature";
     public static final String RANGE_VOLUME = "volume";
+    public static final String MODE_HEAT = "heat";
+    public static final String OPER_AUTO = "auto";
+    public static final String OPER_MAX = "max";
+    public static final String OPER_MIN = "min";
+    public static final String OPER_NORMAL = "normal";
+    public static final String OPER_TURBO = "turbo";
+    public static final String OPER_ECO = "eco";
+    public static final String OPER_SMART = "smart";
+    public static final String OPER_COOL = "cool";
+    public static final String OPER_DRY = "dry";
+    public static final String OPER_FAN_ONLY = "fan_only";
+    public static final String OPER_HEAT = "heat";
+    public static final String OPER_PREHEAT = "preheat";
+    public static final String OPER_HIGH = "high";
+    public static final String OPER_LOW = "low";
+    public static final String OPER_MEDIUM = "medium";
+    public static final String OPER_FAST = "fast";
+    public static final String OPER_SLOW = "slow";
+    public static final String OPER_EXPRESS = "express";
+    public static final String OPER_QUIET = "quiet";
+    public static final String OPER_HORIZONTAL = "horizontal";
+    public static final String OPER_STATIONARY = "stationary";
+    public static final String OPER_VERTICAL = "vertical";
+    public static final String OPER_ONE = "one";
+    public static final String OPER_TWO = "two";
+    public static final String OPER_THREE = "three";
+    public static final String OPER_FOUR = "four";
+    public static final String OPER_FIVE = "five";
+    public static final String OPER_SIX = "six";
+    public static final String OPER_SEVEN = "seven";
+    public static final String OPER_EIGHT = "eight";
+    public static final String OPER_NINE = "nine";
+    public static final String OPER_TEN = "ten";
     public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
             DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT);
     public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS, RANGE_CHANNEL, RANGE_HUMIDITY,
             RANGE_OPEN, RANGE_TEMPERATURE, RANGE_VOLUME);
+    public static final Collection<String> OPER_LIST = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO,
+            OPER_ECO, OPER_SMART, OPER_PREHEAT, OPER_HEAT, OPER_FAN_ONLY, OPER_DRY, OPER_COOL, OPER_MEDIUM, OPER_LOW,
+            OPER_HIGH, OPER_QUIET, OPER_EXPRESS, OPER_SLOW, OPER_FAST, OPER_VERTICAL, OPER_STATIONARY, OPER_HORIZONTAL,
+            OPER_ONE,OPER_TWO,OPER_THREE,OPER_FOUR,OPER_FIVE,OPER_SIX,OPER_SEVEN,OPER_EIGHT,OPER_NINE,OPER_TEN);
+
+    public static Collection<String> DEFAULT_HEAT = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO);
+
     private final String id;
     private final String name;
     private final String type;
@@ -108,6 +149,15 @@ public class YandexDevice {
         cp.setInstance(instance);
         cp.setUnit(unit);
         cp.setRange(minRange, maxRange, precision);
+        cp.setOhID(ohID);
+        capabilities.add(cp);
+    }
+
+    public void addCapabilities(String ohID, String capability, String instance, Collection<String> modesCol) {
+        YandexAliceCapabilities cp = new YandexAliceCapabilities();
+        cp.addCapability(capability);
+        cp.setInstance(instance);
+        cp.setModes(modesCol);
         cp.setOhID(ohID);
         capabilities.add(cp);
     }
