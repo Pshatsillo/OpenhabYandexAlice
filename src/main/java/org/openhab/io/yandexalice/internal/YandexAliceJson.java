@@ -110,12 +110,12 @@ public class YandexAliceJson {
         JSONArray device = new JSONObject(returnRequest.get("payload").toString()).getJSONArray("devices");
         JSONArray properties = new JSONArray();
         for (YandexAliceProperties prp : yaDev.getProperties()) {
-            if (prp.propName.equals(YandexDevice.PROP_EVENT)) {
+            if (prp.getPropName().equals(YandexDevice.PROP_EVENT)) {
                 properties.put(new JSONObject().put("type", prp.getPropName())
                         .put("parameters",
                                 new JSONObject().put("instance", prp.getInstance()).put("events", prp.getEvents()))
                         .put("retrievable", true).put("reportable", true));
-            } else if (prp.propName.equals(YandexDevice.PROP_FLOAT)) {
+            } else if (prp.getPropName().equals(YandexDevice.PROP_FLOAT)) {
                 properties.put(new JSONObject().put("type", prp.getPropName())
                         .put("parameters",
                                 new JSONObject().put("instance", prp.getInstance()).put("unit", prp.getUnit()))

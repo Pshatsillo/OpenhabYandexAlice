@@ -23,11 +23,11 @@ import org.json.JSONObject;
  */
 @NonNullByDefault
 public class YandexAliceProperties {
-    String propName;
-    String instance;
-    String unit = "";
-    String ohItemID = "";
-    JSONArray events = new JSONArray();
+    private String propName;
+    private String instance;
+    private String unit = "";
+    private String ohItemID = "";
+    private JSONArray events = new JSONArray();
 
     public YandexAliceProperties(String ohItemID, String propName, String instance, String unit) {
         this.propName = propName;
