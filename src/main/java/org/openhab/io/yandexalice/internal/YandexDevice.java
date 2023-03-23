@@ -67,7 +67,7 @@ public class YandexDevice {
     public static final String DEV_SENSOR_SMOKE = "devices.types.sensor.smoke";
     public static final String DEV_PET_DRINKING_FOUNTAIN = "devices.types.pet_drinking_fountain";
     public static final String DEV_PET_FEEDER = "devices.types.pet_feeder";
-    public static final String DEV_OTHER = "devices.types.sensor.other";
+    public static final String DEV_OTHER = "devices.types.other";
     public static final String FLOAT_AMPERAGE = "amperage";
     public static final String FLOAT_BATTERY_LEVEL = "battery_level";
     public static final String FLOAT_CO2 = "co2_level";

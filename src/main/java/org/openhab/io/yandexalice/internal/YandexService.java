@@ -505,7 +505,7 @@ public class YandexService implements EventSubscriber {
                         };
                         YandexDevice.DEV_LIST.forEach((v) -> {
                             for (String tag : groupItem.getTags()) {
-                                if (v.contains(tag)) {
+                                if (v.contains(tag.toLowerCase())) {
                                     dev.devType = v;
                                     break;
                                 }
