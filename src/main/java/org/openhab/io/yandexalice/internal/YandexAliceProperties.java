@@ -35,7 +35,7 @@ public class YandexAliceProperties {
         this.unit = unit;
         this.ohItemID = ohItemID;
         if (propName.equals(YandexDevice.PROP_EVENT)) {
-            if (instance.equals(YandexDevice.INS_OPEN)) {
+            if (instance.equals(YandexDevice.EVENT_OPEN)) {
                 events = new JSONArray().put(new JSONObject().put("value", "opened"))
                         .put(new JSONObject().put("value", "closed"));
             }
@@ -50,7 +50,7 @@ public class YandexAliceProperties {
         this.propName = propName;
         this.instance = instance;
         if (propName.equals(YandexDevice.PROP_EVENT)) {
-            if (instance.equals(YandexDevice.INS_OPEN)) {
+            if (instance.equals(YandexDevice.EVENT_OPEN)) {
                 events = new JSONArray().put(new JSONObject().put("value", "opened"))
                         .put(new JSONObject().put("value", "closed"));
             }

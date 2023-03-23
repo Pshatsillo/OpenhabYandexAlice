@@ -30,6 +30,14 @@ public class YandexDevice {
     public static final String UNIT_TEMP_CELSIUS = "unit.temperature.celsius";
     public static final String UNIT_PERCENT = "unit.percent";
     public static final String UNIT_PPM = "unit.ppm";
+    public static final String UNIT_VOLT = "unit.volt";
+    public static final String UNIT_AMPERE = "unit.ampere";
+    public static final String UNIT_LUX = "unit.illumination.lux";
+    public static final String UNIT_MCG_M3 = "unit.density.mcg_m3";
+    public static final String UNIT_WATT = "unit.watt";
+    public static final String UNIT_BAR = "unit.pressure.bar";
+    public static final String UNIT_MMHD = "unit.pressure.mmhg";
+
     public static final String PROP_FLOAT = "devices.properties.float";
     public static final String PROP_EVENT = "devices.properties.event";
     public static final String DEV_SENSOR = "devices.types.sensor";
@@ -60,14 +68,26 @@ public class YandexDevice {
     public static final String DEV_PET_DRINKING_FOUNTAIN = "devices.types.pet_drinking_fountain";
     public static final String DEV_PET_FEEDER = "devices.types.pet_feeder";
     public static final String DEV_OTHER = "devices.types.sensor.other";
-    public static final String INS_TEMP = "temperature";
-    public static final String INS_HUMIDITY = "humidity";
-    public static final String INS_CO2 = "co2_level";
-    public static final String INS_OPEN = "open";
+    public static final String FLOAT_AMPERAGE = "amperage";
+    public static final String FLOAT_BATTERY_LEVEL = "battery_level";
+    public static final String FLOAT_CO2 = "co2_level";
+    public static final String FLOAT_FOOD_LEVEL = "food_level";
+    public static final String FLOAT_HUMIDITY = "humidity";
+    public static final String FLOAT_ILLUMINATION = "illumination";
+    public static final String FLOAT_PM1_DENSITY = "pm1_density";
+    public static final String FLOAT_PM25_DENSITY = "pm2.5_density";
+    public static final String FLOAT_PM10_DENSITY = "pm10_density";
+    public static final String FLOAT_POWER = "power";
+    public static final String FLOAT_PRESSURE = "pressure";
+    public static final String FLOAT_TEMP = "temperature";
+    public static final String FLOAT_TVOC = "tvoc";
+    public static final String FLOAT_VOLTAGE = "voltage";
+    public static final String FLOAT_WATER_LEVEL = "water_level";
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     public static final String CAP_COLOR_SETTINGS = "devices.capabilities.color_setting";
     public static final String CAP_RANGE = "devices.capabilities.range";
     public static final String CAP_MODE = "devices.capabilities.mode";
+    public static final String CAP_TOGGLE = "devices.capabilities.toggle";
     public static final String RANGE_BRIGHTNESS = "brightness";
     public static final String RANGE_CHANNEL = "channel";
     public static final String RANGE_HUMIDITY = "humidity";
@@ -117,6 +137,22 @@ public class YandexDevice {
     public static final String OPER_EIGHT = "eight";
     public static final String OPER_NINE = "nine";
     public static final String OPER_TEN = "ten";
+    public static final String TOGGLE_BACKLIGHT = "backlight";
+    public static final String TOGGLE_MUTE = "mute";
+    public static final String TOGGLE_CONTROLS_LOCKED = "controls_locked";
+    public static final String TOGGLE_IONIZATION = "ionization";
+    public static final String TOGGLE_KEEP_WARM = "keep_warm";
+    public static final String TOGGLE_OSCILLATION = "oscillation";
+    public static final String TOGGLE_PAUSE = "pause";
+    public static final String EVENT_VIBRATION = "vibration";
+    public static final String EVENT_OPEN = "open";
+    public static final String EVENT_BUTTON = "button";
+    public static final String EVENT_MOTION = "motion";
+    public static final String EVENT_SMOKE = "smoke";
+    public static final String EVENT_GAS = "gas";
+    public static final String EVENT_BATTERY_LEVEL = "battery_level";
+    public static final String EVENT_WATER_LEVEL = "water_level";
+    public static final String EVENT_WATER_LEAK = "water_leak";
     public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
             DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT, DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX,
             DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER, DEV_VACUUM_CLEANER, DEV_WASHING_MACHINE, DEV_DISHWASHER,
@@ -143,7 +179,15 @@ public class YandexDevice {
     public static final Collection<String> DEFAULT_TEA = List.of(OPER_AUTO);
     public static final Collection<String> DEFAULT_WORK_SPEED = List.of(OPER_AUTO, OPER_FAST, OPER_MAX, OPER_MEDIUM,
             OPER_MIN, OPER_SLOW, OPER_TURBO);
+
     public static Collection<String> DEFAULT_HEAT = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO);
+    public static final Collection<String> TOGGLE_LIST = List.of(TOGGLE_BACKLIGHT, TOGGLE_MUTE, TOGGLE_PAUSE,
+            TOGGLE_IONIZATION, TOGGLE_OSCILLATION, TOGGLE_CONTROLS_LOCKED, TOGGLE_KEEP_WARM);
+    public static final Collection<String> FLOAT_LIST = List.of(FLOAT_AMPERAGE, FLOAT_BATTERY_LEVEL, FLOAT_CO2,
+            FLOAT_FOOD_LEVEL, FLOAT_HUMIDITY, FLOAT_ILLUMINATION, FLOAT_PM1_DENSITY, FLOAT_PM25_DENSITY,
+            FLOAT_PM10_DENSITY, FLOAT_POWER, FLOAT_PRESSURE, FLOAT_TEMP, FLOAT_TVOC, FLOAT_VOLTAGE, FLOAT_WATER_LEVEL);
+    public static final Collection<String> EVENT_LIST = List.of(EVENT_OPEN, EVENT_SMOKE, EVENT_BUTTON, EVENT_GAS,
+            EVENT_MOTION, EVENT_BATTERY_LEVEL, EVENT_VIBRATION, EVENT_WATER_LEVEL, EVENT_WATER_LEAK);
     private final String id;
     private final String name;
     private final String type;
