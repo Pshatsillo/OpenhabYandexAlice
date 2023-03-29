@@ -1,13 +1,9 @@
 /target/
 src/main/history/dependencies.xml
 .idea/vcs.xml
-.idea/vcs.xml
 .idea/compiler.xml
 .idea/org.openhab.io.yandexalice.iml
-.idea/vcs.xml
 .idea/workspace.xml
-.idea/compiler.xml
-.idea/compiler.xml
 .idea/jpa-buddy.xml
 .idea/misc.xml
 .idea/inspectionProfiles/Project_Default.xml
@@ -247,5 +243,3 @@ org.openhab.io.yandexalice.iml
 .idea/libraries/Maven__com_fasterxml_jackson_core_jackson_annotations_2_12_1.xml
 .idea/libraries/Maven__ch_qos_logback_logback_core_1_2_11.xml
 .idea/libraries/Maven__ch_qos_logback_logback_classic_1_2_11.xml
-.idea/compiler.xml
-.idea/compiler.xml
