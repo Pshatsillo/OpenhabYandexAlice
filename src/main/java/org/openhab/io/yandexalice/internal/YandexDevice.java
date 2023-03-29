@@ -37,7 +37,6 @@ public class YandexDevice {
     public static final String UNIT_WATT = "unit.watt";
     public static final String UNIT_BAR = "unit.pressure.bar";
     public static final String UNIT_MMHD = "unit.pressure.mmhg";
-
     public static final String PROP_FLOAT = "devices.properties.float";
     public static final String PROP_EVENT = "devices.properties.event";
     public static final String DEV_SENSOR = "devices.types.sensor";
@@ -153,6 +152,24 @@ public class YandexDevice {
     public static final String EVENT_BATTERY_LEVEL = "battery_level";
     public static final String EVENT_WATER_LEVEL = "water_level";
     public static final String EVENT_WATER_LEAK = "water_leak";
+    public static final String SCENE_ALARM = "alarm";
+    public static final String SCENE_ALICE = "alice";
+    public static final String SCENE_CANDLE = "candle";
+    public static final String SCENE_DINNER = "dinner";
+    public static final String SCENE_FANTASY = "fantasy";
+    public static final String SCENE_GARLAND = "garland";
+    public static final String SCENE_JUNGLE = "jungle";
+    public static final String SCENE_MOVIE = "movie";
+    public static final String SCENE_NEON = "neon";
+    public static final String SCENE_NIGHT = "night";
+    public static final String SCENE_OCEAN = "ocean";
+    public static final String SCENE_PARTY = "party";
+    public static final String SCENE_READING = "reading";
+    public static final String SCENE_REST = "rest";
+    public static final String SCENE_ROMANCE = "romance";
+    public static final String SCENE_SIREN = "siren";
+    public static final String SCENE_SUNRISE = "sunrise";
+    public static final String SCENE_SUNSET = "sunset";
     public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
             DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT, DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX,
             DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER, DEV_VACUUM_CLEANER, DEV_WASHING_MACHINE, DEV_DISHWASHER,
@@ -188,12 +205,17 @@ public class YandexDevice {
             FLOAT_PM10_DENSITY, FLOAT_POWER, FLOAT_PRESSURE, FLOAT_TEMP, FLOAT_TVOC, FLOAT_VOLTAGE, FLOAT_WATER_LEVEL);
     public static final Collection<String> EVENT_LIST = List.of(EVENT_OPEN, EVENT_SMOKE, EVENT_BUTTON, EVENT_GAS,
             EVENT_MOTION, EVENT_BATTERY_LEVEL, EVENT_VIBRATION, EVENT_WATER_LEVEL, EVENT_WATER_LEAK);
+    public static final Collection<String> SCENES_LIST = List.of(SCENE_ALARM, SCENE_ALICE, SCENE_CANDLE, SCENE_DINNER,
+            SCENE_FANTASY, SCENE_GARLAND, SCENE_JUNGLE, SCENE_MOVIE, SCENE_NEON, SCENE_NIGHT, SCENE_OCEAN, SCENE_PARTY,
+            SCENE_READING, SCENE_REST, SCENE_ROMANCE, SCENE_SIREN, SCENE_SUNRISE, SCENE_SUNSET);
     private final String id;
     private final String name;
     private final String type;
     private final List<YandexAliceProperties> properties = new ArrayList<>();
     private final List<YandexAliceCapabilities> capabilities;
     private State state;
+    private Collection<String> scenesList = new ArrayList<>();;
+    private String scenesOhID;
 
     public State getState() {
         return state;
@@ -209,6 +231,7 @@ public class YandexDevice {
         this.type = type;
         capabilities = new ArrayList<>();
         this.state = state;
+        scenesOhID = "";
     }
 
     public void addCapabilities(String ohID, String capability) {
@@ -221,6 +244,10 @@ public class YandexDevice {
                 break;
             case CAP_COLOR_SETTINGS:
                 cp.addCapability(capability);
+                if (!scenesList.isEmpty()) {
+                    cp.setScenesList(scenesList);
+                    cp.setScenesOhID(scenesOhID);
+                }
                 break;
             case CAP_RANGE:
                 cp.addCapability(capability);
@@ -240,6 +267,12 @@ public class YandexDevice {
         cp.setUnit(unit);
         cp.setRange(minRange, maxRange, precision);
         cp.setOhID(ohID);
+        if (!scenesList.isEmpty()) {
+            if (capability.equals(CAP_COLOR_SETTINGS)) {
+                cp.setScenesList(scenesList);
+                cp.setScenesOhID(scenesOhID);
+            }
+        }
         capabilities.add(cp);
     }
 
@@ -249,6 +282,12 @@ public class YandexDevice {
         cp.setInstance(instance);
         cp.setModes(modesCol);
         cp.setOhID(ohID);
+        if (!scenesList.isEmpty()) {
+            if (capability.equals(CAP_COLOR_SETTINGS)) {
+                cp.setScenesList(scenesList);
+                cp.setScenesOhID(scenesOhID);
+            }
+        }
         capabilities.add(cp);
     }
 
@@ -280,5 +319,16 @@ public class YandexDevice {
 
     public List<YandexAliceProperties> getProperties() {
         return properties;
+    }
+
+    public void setSceneColorCapabilities(Collection<String> scenesList, String scenesOhID) {
+        this.scenesList = scenesList;
+        this.scenesOhID = scenesOhID;
+        for (YandexAliceCapabilities capability : capabilities) {
+            if (capability.capabilityName.equals(CAP_COLOR_SETTINGS)) {
+                capability.setScenesList(scenesList);
+                capability.setScenesOhID(scenesOhID);
+            }
+        }
     }
 }

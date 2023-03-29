@@ -150,8 +150,8 @@ public class YandexService implements EventSubscriber {
                                     (property) -> eventJson.addPropertyState(yaDev, property, item.getState()));
                             yaDev.getCapabilities()
                                     .forEach((cap) -> eventJson.addCapabilityState(yaDev, cap, item.getState()));
+                            updateCallback(eventJson.returnRequest.toString());
                         }
-                        updateCallback(eventJson.returnRequest.toString());
                     }
                 }
             }
@@ -216,6 +216,7 @@ public class YandexService implements EventSubscriber {
                 if (itemRegistry != null) {
                     Item item = Objects.requireNonNull(itemRegistry).getItem(name);
                     if (!item.getGroupNames().isEmpty()) {
+                        boolean changed = false;
                         YandexDevice yaDev;
                         for (String itm : item.getGroupNames()) {
                             GroupItem grpitem = (GroupItem) Objects.requireNonNull(itemRegistry).getItem(itm);
@@ -224,19 +225,51 @@ public class YandexService implements EventSubscriber {
                                 YandexAliceJson eventJson = new YandexAliceJson(
                                         (double) System.currentTimeMillis() / 1000L, uuid);
                                 eventJson.setDeviceID(yaDev);
-
-                                for (YandexAliceProperties prop : yaDev.getProperties()) {
-                                    if (prop.getOhID().equals(name)) {
-                                        eventJson.addPropertyState(prop, state);
+                                if (!yaDev.getProperties().isEmpty()) {
+                                    for (YandexAliceProperties prop : yaDev.getProperties()) {
+                                        if (prop.getOhID().equals(name)) {
+                                            State st = prop.getState();
+                                            if (st != null) {
+                                                if (!st.equals(item.getState())) {
+                                                    eventJson.addPropertyState(prop, item.getState());
+                                                    prop.setState(item.getState());
+                                                    changed = true;
+                                                } else {
+                                                    changed = false;
+                                                }
+                                            } else {
+                                                prop.setState(item.getState());
+                                                eventJson.addPropertyState(prop, item.getState());
+                                                changed = true;
+                                            }
+                                        }
                                     }
                                 }
-                                for (YandexAliceCapabilities cap : yaDev.getCapabilities()) {
-                                    if (cap.getOhID().equals(name)) {
-                                        eventJson.addCapabilityState(cap, state);
+                                if (!yaDev.getCapabilities().isEmpty()) {
+                                    for (YandexAliceCapabilities cap : yaDev.getCapabilities()) {
+                                        if (cap.getOhID().equals(name)) {
+                                            State st = cap.getState();
+                                            if (st != null) {
+                                                if (!st.equals(item.getState())) {
+                                                    eventJson.addCapabilityState(cap, item.getState());
+                                                    cap.setState(item.getState());
+                                                    changed = true;
+                                                } else {
+                                                    changed = false;
+                                                }
+                                            } else {
+                                                cap.setState(item.getState());
+                                                eventJson.addCapabilityState(cap, item.getState());
+                                                changed = true;
+                                            }
+                                        }
                                     }
                                 }
-                                updateCallback(eventJson.returnRequest.toString());
-                                yaDev.setState(item.getState());
+                                if (changed) {
+                                    updateCallback(eventJson.returnRequest.toString());
+                                } // else {
+                                  // //logger.debug("Item {} has no changes", grpitem);
+                                  // }
 
                             }
                             // logger.debug("it is group member {}", yaDev);
@@ -497,7 +530,7 @@ public class YandexService implements EventSubscriber {
                         yandexDevicesList.put(item.getName(), yDev);
 
                     } else if (item instanceof GroupItem) {
-                        logger.debug("It`s a GROUP!");
+                        // logger.debug("It`s a GROUP!");
                         GroupItem groupItem = (GroupItem) item;
                         Set<Item> grpMembers = groupItem.getAllMembers();
                         var dev = new Object() {
@@ -515,6 +548,7 @@ public class YandexService implements EventSubscriber {
                                 dev.devType, item.getState());
                         json.createDevice(yDev);
                         for (Item grpItem : grpMembers) {
+                            String ciID = "";
                             if (grpItem.getType().equals("Switch")) {
                                 if (grpItem.hasTag("toggle")) {
                                     // TODO toggle
@@ -536,6 +570,10 @@ public class YandexService implements EventSubscriber {
                                     logger.debug("this is GROUP Switch ON_OFF mode");
                                     yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_ON_OFF);
                                 }
+                            } else if (grpItem instanceof ColorItem) {
+                                ciID = grpItem.getName();
+                                yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_COLOR_SETTINGS);
+                                json.addCapabilities(yDev);
                             } else if ((grpItem instanceof NumberItem) || (grpItem instanceof DimmerItem)) {
                                 logger.debug("this is GROUP Number ");
                                 Set<String> tags = grpItem.getTags();
@@ -670,6 +708,25 @@ public class YandexService implements EventSubscriber {
                                     }
                                 }
                                 for (String tag : tags) {
+                                    if ("scenes".equalsIgnoreCase(tag)) {
+                                        ArrayList<String> scenes = new ArrayList<>();
+                                        for (String scnTags : tags) {
+                                            if (YandexDevice.SCENES_LIST.contains(scnTags.toLowerCase())) {
+                                                YandexDevice.SCENES_LIST.forEach((list) -> {
+                                                    if (list.equals(scnTags)) {
+                                                        scenes.add(scnTags);
+                                                    }
+                                                });
+
+                                            }
+                                            if (scenes.isEmpty()) {
+                                                yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
+                                                        grpItem.getName());
+                                            } else {
+                                                yDev.setSceneColorCapabilities(scenes, grpItem.getName());
+                                            }
+                                        }
+                                    }
                                     if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
                                         capName = YandexDevice.CAP_MODE;
                                     }
@@ -821,7 +878,20 @@ public class YandexService implements EventSubscriber {
                                 grpMembers.forEach((memItem) -> {
                                     if (cp.getOhID().equals(memItem.getName())) {
                                         logger.debug("item is {}", memItem.getName());
-                                        if (memItem instanceof DimmerItem) {
+                                        if (memItem instanceof ColorItem) {
+                                            String instance = state.getString("instance");
+                                            if (instance.equals("scene")) {
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(cp.getScenesOhID(),
+                                                                StringType.valueOf(state.getString("value"))));
+                                            } else {
+                                                JSONObject value = state.getJSONObject("value");
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
+                                                                HSBType.valueOf(value.get("h") + "," + value.get("s")
+                                                                        + "," + value.get("v"))));
+                                            }
+                                        } else if (memItem instanceof DimmerItem) {
                                             int value = state.getInt("value");
                                             String instance = state.getString("instance");
                                             if (instance.equals(cp.getInstance())) {

@@ -15,8 +15,10 @@ package org.openhab.io.yandexalice.internal;
 import java.util.Collection;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openhab.core.types.State;
 
 /**
  * The {@link YandexAliceCapabilities} model for Yandex capabilities
@@ -32,7 +34,11 @@ public class YandexAliceCapabilities {
     private int maxRange;
     private int minRange;
     private String ohID;
+    private String scenesOhID;
+    @Nullable
+    private State state = null;
     JSONArray modes = new JSONArray();
+    JSONArray scenesList = new JSONArray();
 
     public JSONArray getModes() {
         return modes;
@@ -48,6 +54,7 @@ public class YandexAliceCapabilities {
         instance = "";
         unit = "";
         ohID = "";
+        scenesOhID = "";
     }
 
     public String getOhID() {
@@ -98,5 +105,31 @@ public class YandexAliceCapabilities {
 
     public String getUnit() {
         return unit;
+    }
+
+    public @Nullable State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
+    public void setScenesList(Collection<String> scenesList) {
+        scenesList.forEach((scn) -> {
+            this.scenesList.put(new JSONObject().put("id", scn));
+        });
+    }
+
+    public JSONArray getScenesList() {
+        return scenesList;
+    }
+
+    public String getScenesOhID() {
+        return scenesOhID;
+    }
+
+    public void setScenesOhID(String scenesOhID) {
+        this.scenesOhID = scenesOhID;
     }
 }

@@ -13,8 +13,10 @@
 package org.openhab.io.yandexalice.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openhab.core.types.State;
 
 /**
  * The {@link YandexAliceProperties} model for Yandex properties
@@ -28,6 +30,8 @@ public class YandexAliceProperties {
     private String unit = "";
     private String ohItemID = "";
     private JSONArray events = new JSONArray();
+    @Nullable
+    private State state = null;
 
     public YandexAliceProperties(String ohItemID, String propName, String instance, String unit) {
         this.propName = propName;
@@ -71,5 +75,13 @@ public class YandexAliceProperties {
 
     public JSONArray getEvents() {
         return events;
+    }
+
+    public @Nullable State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
     }
 }

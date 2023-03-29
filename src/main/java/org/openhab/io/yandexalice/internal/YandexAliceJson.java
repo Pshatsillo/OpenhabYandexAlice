@@ -84,9 +84,17 @@ public class YandexAliceJson {
                                 .put("unit", cp.getUnit()))
                         .put("retrievable", true).put("reportable", true));
             } else if (cp.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS)) {
-                caps.put(new JSONObject().put("type", cp.getCapabilityName())
-                        .put("parameters", new JSONObject().put("color_model", "hsv")).put("retrievable", true)
-                        .put("reportable", true));
+                if (cp.getScenesList().isEmpty()) {
+                    caps.put(new JSONObject().put("type", cp.getCapabilityName())
+                            .put("parameters", new JSONObject().put("color_model", "hsv")).put("retrievable", true)
+                            .put("reportable", true));
+                } else {
+                    caps.put(new JSONObject().put("type", cp.getCapabilityName())
+                            .put("parameters",
+                                    new JSONObject().put("color_model", "hsv").put("color_scene",
+                                            new JSONObject().put("scenes", cp.getScenesList())))
+                            .put("retrievable", true).put("reportable", true));
+                }
             } else if (cp.capabilityName.equals(YandexDevice.CAP_MODE)) {
                 caps.put(new JSONObject().put("type", cp.getCapabilityName())
                         .put("parameters",
@@ -154,17 +162,26 @@ public class YandexAliceJson {
             // log.debug("cap is {}", caps);
         }
         if (state instanceof OnOffType) {
+            // if (capability.getCapabilityName().equals(YandexDevice.CAP_RANGE)) {
+            // if (state.equals(OnOffType.OFF)) {
+            // caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+            // new JSONObject().put("instance", capability.getInstance()).put("value", 0)));
+            // }
+            // } else if (capability.getCapabilityName().equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+            // caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
+            // .put("instance", "hsv").put("value", new JSONObject().put("h", 0).put("s", 0).put("v", 0))));
+            // } else {
             boolean status = state.equals(OnOffType.ON);
             caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
                     new JSONObject().put("instance", capability.getInstance()).put("value", status)));
+            // }
         } else if (state instanceof HSBType) {
             // log.debug("HSB");
-            returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities",
-                    new JSONArray().put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
-                            new JSONObject().put("instance", "hsv").put("value",
-                                    new JSONObject().put("h", ((HSBType) state).getHue())
-                                            .put("s", ((HSBType) state).getSaturation())
-                                            .put("v", ((HSBType) state).getBrightness())))));
+            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                    new JSONObject().put("instance", "hsv").put("value",
+                            new JSONObject().put("h", ((HSBType) state).getHue())
+                                    .put("s", ((HSBType) state).getSaturation())
+                                    .put("v", ((HSBType) state).getBrightness()))));
         } else if (state instanceof PercentType) {
             if (capability.getCapabilityName().equals(YandexDevice.CAP_ON_OFF)) {
                 boolean status = ((PercentType) state).intValue() > 0;
