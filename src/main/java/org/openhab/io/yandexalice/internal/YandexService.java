@@ -710,6 +710,21 @@ public class YandexService implements EventSubscriber {
                                 for (String tag : tags) {
                                     if ("scenes".equalsIgnoreCase(tag)) {
                                         ArrayList<String> scenes = new ArrayList<>();
+                                        if (options != null) {
+                                            opt = options.getOptions();
+                                            if (!opt.isEmpty()) {
+                                                if (!opt.get(0).getValue().isEmpty()) {
+                                                    for (StateOption stateOption : opt) {
+                                                        if (YandexDevice.SCENES_LIST.contains(stateOption.getValue())) {
+                                                            scenes.add(stateOption.getValue());
+                                                        } else
+                                                            logger.debug("I don't know scene {}",
+                                                                    stateOption.getValue());
+                                                    }
+                                                    // yDev.setSceneColorCapabilities(scenes, grpItem.getName());
+                                                }
+                                            }
+                                        }
                                         for (String scnTags : tags) {
                                             if (YandexDevice.SCENES_LIST.contains(scnTags.toLowerCase())) {
                                                 YandexDevice.SCENES_LIST.forEach((list) -> {

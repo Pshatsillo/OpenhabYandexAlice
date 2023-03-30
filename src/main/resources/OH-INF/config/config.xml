@@ -5,11 +5,11 @@
 	xsi:schemaLocation="https://openhab.org/schemas/config-description/v1.0.0
 		https://openhab.org/schemas/config-description-1.0.0.xsd">
 	<config-description uri="io:yandexalice">
-		<parameter name="token" type="text" required="false">
-			<label>Yandex token</label>
-			<description>You can get it at
-				https://yandex.ru/dev/dialogs/smart-home/doc/reference-alerts/resources-alerts.html</description>
-		</parameter>
+		<!-- <parameter name="token" type="text" required="false"> -->
+		<!-- <label>Yandex token</label> -->
+		<!-- <description>You can get it at -->
+		<!-- https://yandex.ru/dev/dialogs/smart-home/doc/reference-alerts/resources-alerts.html</description> -->
+		<!-- </parameter> -->
 		<parameter name="skillID" type="text" required="false">
 			<label>Yandex skill id</label>
 			<description>You can get it at
