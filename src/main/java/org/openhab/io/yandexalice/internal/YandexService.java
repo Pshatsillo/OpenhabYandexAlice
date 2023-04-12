@@ -64,6 +64,11 @@ import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
+import org.openhab.core.thing.Thing;
+import org.openhab.core.thing.ThingRegistry;
+import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.link.ItemChannelLink;
+import org.openhab.core.thing.link.ItemChannelLinkRegistry;
 import org.openhab.core.types.State;
 import org.openhab.core.types.StateDescription;
 import org.openhab.core.types.StateOption;
@@ -95,6 +100,8 @@ public class YandexService implements EventSubscriber {
     // private static final String CFG_TOKEN = "token";
     private static final String CFG_SKILLID = "skillID";
     private static final String CFG_OAUTH = "oauth";
+    private static @Nullable ThingRegistry things;
+    private static @Nullable ItemChannelLinkRegistry link;
     private final Logger logger = LoggerFactory.getLogger(YandexService.class);
     private final HttpClient httpClient;
     protected static @Nullable ItemRegistry itemRegistry;
@@ -104,8 +111,7 @@ public class YandexService implements EventSubscriber {
     // private final HashMap<String, String> yandexId = new HashMap<>();
     private static boolean action;
     // private String yandexToken = "";
-    private @Nullable String skillID = "";
-    private @Nullable String oAuth = "";
+    private YandexAliceCredits credit = new YandexAliceCredits();
     private static String uuid = "";
     private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
     private @Nullable ScheduledFuture<?> refreshPollingJob;
@@ -115,7 +121,8 @@ public class YandexService implements EventSubscriber {
     @Activate
     public YandexService(final @Reference HttpClientFactory httpClientFactory,
             final @Reference ItemRegistry itemRegistry, final @Reference EventPublisher eventPublisher,
-            final @Reference HttpService httpService) {
+            final @Reference HttpService httpService, final @Reference ThingRegistry things,
+            final @Reference ItemChannelLinkRegistry link) {
         this.httpClient = httpClientFactory.createHttpClient("yandexalice");
         this.httpService = httpService;
         this.httpClient.setStopTimeout(0);
@@ -126,6 +133,8 @@ public class YandexService implements EventSubscriber {
         yandexHTTPCallback = new YandexAliceCallbackServlet();
         YandexService.itemRegistry = itemRegistry;
         YandexService.eventPublisher = eventPublisher;
+        YandexService.things = things;
+        YandexService.link = link;
         getItemsList();
         uuid = InstanceUUID.get();
 
@@ -169,10 +178,10 @@ public class YandexService implements EventSubscriber {
         // // yandexToken = config.get(CFG_TOKEN).toString();
         // }
         if (config.get(CFG_SKILLID) != null) {
-            skillID = (String) config.get(CFG_SKILLID);
+            credit.setSkillID((String) config.get(CFG_SKILLID));
         }
         if (config.get(CFG_OAUTH) != null) {
-            oAuth = (String) config.get(CFG_OAUTH);
+            credit.setoAuth((String) config.get(CFG_OAUTH));
         }
         try {
             this.httpService.registerServlet("/yandex", yandexHTTPCallback, null,
@@ -189,10 +198,10 @@ public class YandexService implements EventSubscriber {
         // // yandexToken = config.get(CFG_TOKEN).toString();
         // }
         if (config.get(CFG_SKILLID) != null) {
-            skillID = (String) config.get(CFG_SKILLID);
+            credit.setSkillID((String) config.get(CFG_SKILLID));
         }
         if (config.get(CFG_OAUTH) != null) {
-            oAuth = (String) config.get(CFG_OAUTH);
+            credit.setoAuth((String) config.get(CFG_OAUTH));
         }
     }
 
@@ -354,10 +363,10 @@ public class YandexService implements EventSubscriber {
         HttpURLConnection con;
         URL yandexURL;
         try {
-            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + skillID + "/callback/state");
+            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state");
             con = (HttpURLConnection) yandexURL.openConnection();
             con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "OAuth " + oAuth);
+            con.setRequestProperty("Authorization", "OAuth " + credit.getoAuth());
             con.setRequestProperty("Content-Type", "application/json");
             con.setDoOutput(true);
             try (OutputStream os = con.getOutputStream()) {
@@ -396,25 +405,71 @@ public class YandexService implements EventSubscriber {
             if (yDev != null) {
                 if (itemRegistry != null) {
                     Item item = Objects.requireNonNull(itemRegistry).getItem(yDev.getId());
-                    if (!(item instanceof GroupItem)) {
-                        for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
-                            aliceJson.addCapabilityState(cap, item.getState());
-                        }
-                        for (YandexAliceProperties prop : yDev.getProperties()) {
-                            aliceJson.addPropertyState(prop, item.getState());
-                        }
-                    } else {
-                        GroupItem groupItem = (GroupItem) item;
-                        Set<Item> grpMembers = groupItem.getAllMembers();
-                        for (Item itemGrp : grpMembers) {
-                            for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
-                                if (cap.getOhID().equals(itemGrp.getName())) {
-                                    aliceJson.addCapabilityState(cap, itemGrp.getState());
+                    Collection<ItemChannelLink> lnk = link.getLinks(item.getName());
+                    boolean realDevice = false;
+                    var getStatusObj = new Object() {
+                        ThingStatus status = ThingStatus.UNKNOWN;
+                    };
+                    if (!lnk.isEmpty()) {
+                        realDevice = true;
+                    }
+                    lnk.forEach(itemChannelLink -> {
+                        String iname = itemChannelLink.getItemName();
+                        logger.debug("linked item {} to {} channel", iname, itemChannelLink.getLinkedUID().getId());
+                        Thing cnl = things
+                                .get(things.getChannel(itemChannelLink.getLinkedUID()).getUID().getThingUID());
+                        logger.debug("status thing {}", cnl.getStatus().name());
+                        getStatusObj.status = cnl.getStatus();
+                    });
+                    if (realDevice) {
+                        if (!getStatusObj.status.equals(ThingStatus.ONLINE)) {
+                            aliceJson.addError("DEVICE_UNREACHABLE", yDev.getId());
+                        } else {
+                            if (!(item instanceof GroupItem)) {
+                                for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
+                                    aliceJson.addCapabilityState(cap, item.getState());
+                                }
+                                for (YandexAliceProperties prop : yDev.getProperties()) {
+                                    aliceJson.addPropertyState(prop, item.getState());
+                                }
+                            } else {
+                                GroupItem groupItem = (GroupItem) item;
+                                Set<Item> grpMembers = groupItem.getAllMembers();
+                                for (Item itemGrp : grpMembers) {
+                                    for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
+                                        if (cap.getOhID().equals(itemGrp.getName())) {
+                                            aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                        }
+                                    }
+                                    for (YandexAliceProperties prop : yDev.getProperties()) {
+                                        if (prop.getOhID().equals(itemGrp.getName())) {
+                                            aliceJson.addPropertyState(prop, itemGrp.getState());
+                                        }
+                                    }
                                 }
                             }
+                        }
+                    } else {
+                        if (!(item instanceof GroupItem)) {
+                            for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
+                                aliceJson.addCapabilityState(cap, item.getState());
+                            }
                             for (YandexAliceProperties prop : yDev.getProperties()) {
-                                if (prop.getOhID().equals(itemGrp.getName())) {
-                                    aliceJson.addPropertyState(prop, itemGrp.getState());
+                                aliceJson.addPropertyState(prop, item.getState());
+                            }
+                        } else {
+                            GroupItem groupItem = (GroupItem) item;
+                            Set<Item> grpMembers = groupItem.getAllMembers();
+                            for (Item itemGrp : grpMembers) {
+                                for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
+                                    if (cap.getOhID().equals(itemGrp.getName())) {
+                                        aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                    }
+                                }
+                                for (YandexAliceProperties prop : yDev.getProperties()) {
+                                    if (prop.getOhID().equals(itemGrp.getName())) {
+                                        aliceJson.addPropertyState(prop, itemGrp.getState());
+                                    }
                                 }
                             }
                         }
@@ -900,103 +955,74 @@ public class YandexService implements EventSubscriber {
         final Logger logger = LoggerFactory.getLogger(YandexService.class);
         action = true;
         JSONObject answer = new JSONObject();
+        JSONObject payload = new JSONObject();
+        JSONArray devices = new JSONArray();
+        answer.put("payload", payload);
+        answer.put("request_id", header);
+        // Collection<ItemChannelLink> lnk = link.getAll();
+        // lnk.forEach(itemChannelLink -> {
+        // String iname = itemChannelLink.getItemName();
+        // logger.debug("linked item {} to {} channel", iname, itemChannelLink.getLinkedUID().getId());
+        // Thing cnl = things.get(things.getChannel(itemChannelLink.getLinkedUID()).getUID().getThingUID());
+        // logger.debug("status thing {}", cnl.getStatus().name());
+        // });
         try {
             JSONArray parseItem = new JSONObject(json).getJSONObject("payload").getJSONArray("devices");
-            JSONObject dev = parseItem.getJSONObject(0);
-            String id = dev.getString("id");
-            JSONArray capabilities = dev.getJSONArray("capabilities");
-            JSONObject state = capabilities.getJSONObject(0).getJSONObject("state");
-            String type = capabilities.getJSONObject(0).getString("type");
-            if ((itemRegistry != null) && (eventPublisher != null)) {
-                Item item = Objects.requireNonNull(itemRegistry).getItem(id);
-                if (item instanceof ColorItem) {
-                    JSONObject value = state.getJSONObject("value");
-                    Objects.requireNonNull(eventPublisher).post(ItemEventFactory.createCommandEvent(id,
-                            HSBType.valueOf(value.get("h") + "," + value.get("s") + "," + value.get("v"))));
-                } else if (item instanceof DimmerItem) {
-                    int value = state.getInt("value");
-                    Objects.requireNonNull(eventPublisher)
-                            .post(ItemEventFactory.createCommandEvent(id, PercentType.valueOf(String.valueOf(value))));
-                } else if (item instanceof SwitchItem) {
-                    boolean value = state.getBoolean("value");
-                    if (value) {
-                        Objects.requireNonNull(eventPublisher)
-                                .post(ItemEventFactory.createCommandEvent(id, OnOffType.ON));
-                    } else {
-                        Objects.requireNonNull(eventPublisher)
-                                .post(ItemEventFactory.createCommandEvent(id, OnOffType.OFF));
-                    }
-                } else if (item instanceof GroupItem) {
-                    GroupItem groupItem = (GroupItem) item;
-                    Set<Item> grpMembers = groupItem.getAllMembers();
-                    YandexDevice yaDev = yandexDevicesList.get(item.getName());
-                    if (yaDev != null) {
-                        List<YandexAliceCapabilities> caps = yaDev.getCapabilities();
-                        for (YandexAliceCapabilities cp : caps) {
-                            if (cp.getCapabilityName().equals(type)) {
-                                grpMembers.forEach((memItem) -> {
-                                    if (cp.getOhID().equals(memItem.getName())) {
-                                        logger.debug("item is {}", memItem.getName());
-                                        if (memItem instanceof ColorItem) {
-                                            String instance = state.getString("instance");
-                                            if ("scene".equals(instance)) {
-                                                Objects.requireNonNull(eventPublisher)
-                                                        .post(ItemEventFactory.createCommandEvent(cp.getScenesOhID(),
-                                                                StringType.valueOf(state.getString("value"))));
-                                            } else {
-                                                JSONObject value = state.getJSONObject("value");
-                                                Objects.requireNonNull(eventPublisher)
-                                                        .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
-                                                                HSBType.valueOf(value.get("h") + "," + value.get("s")
-                                                                        + "," + value.get("v"))));
-                                            }
-                                        } else if (memItem instanceof DimmerItem) {
-                                            int value = state.getInt("value");
-                                            String instance = state.getString("instance");
-                                            if (instance.equals(cp.getInstance())) {
-                                                Objects.requireNonNull(eventPublisher)
-                                                        .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
-                                                                PercentType.valueOf(String.valueOf(value))));
-                                            }
-                                        } else if (memItem instanceof SwitchItem) {
-                                            boolean value = state.getBoolean("value");
-                                            if (value) {
-                                                Objects.requireNonNull(eventPublisher).post(ItemEventFactory
-                                                        .createCommandEvent(cp.getOhID(), OnOffType.ON));
-                                            } else {
-                                                Objects.requireNonNull(eventPublisher).post(ItemEventFactory
-                                                        .createCommandEvent(cp.getOhID(), OnOffType.OFF));
-                                            }
-                                        } else if (memItem instanceof NumberItem) {
-                                            int value = state.getInt("value");
-                                            String instance = state.getString("instance");
-                                            if (instance.equals(cp.getInstance())) {
-                                                Objects.requireNonNull(eventPublisher)
-                                                        .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
-                                                                DecimalType.valueOf(String.valueOf(value))));
-                                            }
-                                        } else if (memItem instanceof StringItem) {
-                                            Objects.requireNonNull(eventPublisher)
-                                                    .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
-                                                            StringType.valueOf(state.getString("value"))));
-                                        }
-                                    }
-                                });
-
-                            }
+            for (int i = 0; i < parseItem.length(); i++) {
+                JSONObject dev = parseItem.getJSONObject(i);
+                String id = dev.getString("id");
+                JSONArray capabilities = dev.getJSONArray("capabilities");
+                JSONObject state = capabilities.getJSONObject(0).getJSONObject("state");
+                String type = capabilities.getJSONObject(0).getString("type");
+                boolean realDevice = false;
+                var getStatusObj = new Object() {
+                    ThingStatus status = ThingStatus.UNKNOWN;
+                };
+                if ((itemRegistry != null) && (eventPublisher != null)) {
+                    try {
+                        Item item = Objects.requireNonNull(itemRegistry).getItem(id);
+                        Collection<ItemChannelLink> lnk = link.getLinks(item.getName());
+                        if (!lnk.isEmpty()) {
+                            realDevice = true;
                         }
+                        lnk.forEach(itemChannelLink -> {
+                            String iname = itemChannelLink.getItemName();
+                            logger.debug("linked item {} to {} channel", iname, itemChannelLink.getLinkedUID().getId());
+                            Thing cnl = things
+                                    .get(things.getChannel(itemChannelLink.getLinkedUID()).getUID().getThingUID());
+                            logger.debug("status thing {}", cnl.getStatus().name());
+                            getStatusObj.status = cnl.getStatus();
+                        });
+                        String status;
+                        if (realDevice) {
+                            if (!getStatusObj.status.equals(ThingStatus.ONLINE)) {
+                                status = "ERROR";
+                            } else {
+                                status = publishState(id, item, state, type);
+                            }
+                        } else {
+                            status = publishState(id, item, state, type);
+                        }
+                        JSONObject itemJson = new JSONObject();
+                        itemJson.put("id", item.getName());
+                        if ("DONE".equals(status)) {
+                            itemJson.put("action_result", new JSONObject().put("status", "DONE"));
+                        } else if ("ERROR".equals(status)) {
+                            itemJson.put("action_result",
+                                    new JSONObject().put("status", "ERROR").put("error_code", "DEVICE_UNREACHABLE"));
+                        }
+                        devices.put(itemJson);
+                    } catch (Exception e) {
+                        JSONObject itemJson = new JSONObject();
+                        itemJson.put("id", id);
+                        itemJson.put("action_result",
+                                new JSONObject().put("status", "ERROR").put("error_code", "DEVICE_UNREACHABLE"));
+                        devices.put(itemJson);
+                        logger.debug("Error {}", e.getLocalizedMessage());
                     }
                 }
-                JSONObject payload = new JSONObject();
-                JSONArray devices = new JSONArray();
-                answer.put("payload", payload);
-                answer.put("request_id", header);
-                JSONObject itemJson = new JSONObject();
-                itemJson.put("id", item.getName());
-                itemJson.put("action_result", new JSONObject().put("status", "DONE"));
-                devices.put(itemJson);
-                payload.put("devices", devices);
             }
+            payload.put("devices", devices);
         } catch (Exception e) {
             logger.debug("Error get item {} state", e.getLocalizedMessage());
         }
@@ -1004,6 +1030,87 @@ public class YandexService implements EventSubscriber {
         return answer.toString();
     }
 
+    private static String publishState(String id, Item item, JSONObject state, String type) {
+        try {
+            if (item instanceof ColorItem) {
+                JSONObject value = state.getJSONObject("value");
+                Objects.requireNonNull(eventPublisher).post(ItemEventFactory.createCommandEvent(id,
+                        HSBType.valueOf(value.get("h") + "," + value.get("s") + "," + value.get("v"))));
+            } else if (item instanceof DimmerItem) {
+                int value = state.getInt("value");
+                Objects.requireNonNull(eventPublisher)
+                        .post(ItemEventFactory.createCommandEvent(id, PercentType.valueOf(String.valueOf(value))));
+            } else if (item instanceof SwitchItem) {
+                boolean value = state.getBoolean("value");
+                if (value) {
+                    Objects.requireNonNull(eventPublisher).post(ItemEventFactory.createCommandEvent(id, OnOffType.ON));
+                } else {
+                    Objects.requireNonNull(eventPublisher).post(ItemEventFactory.createCommandEvent(id, OnOffType.OFF));
+                }
+            } else if (item instanceof GroupItem) {
+                GroupItem groupItem = (GroupItem) item;
+                Set<Item> grpMembers = groupItem.getAllMembers();
+                YandexDevice yaDev = yandexDevicesList.get(item.getName());
+                if (yaDev != null) {
+                    List<YandexAliceCapabilities> caps = yaDev.getCapabilities();
+                    for (YandexAliceCapabilities cp : caps) {
+                        if (cp.getCapabilityName().equals(type)) {
+                            grpMembers.forEach((memItem) -> {
+                                if (cp.getOhID().equals(memItem.getName())) {
+                                    if (memItem instanceof ColorItem) {
+                                        String instance = state.getString("instance");
+                                        if ("scene".equals(instance)) {
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(cp.getScenesOhID(),
+                                                            StringType.valueOf(state.getString("value"))));
+                                        } else {
+                                            JSONObject value = state.getJSONObject("value");
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
+                                                            HSBType.valueOf(value.get("h") + "," + value.get("s") + ","
+                                                                    + value.get("v"))));
+                                        }
+                                    } else if (memItem instanceof DimmerItem) {
+                                        int value = state.getInt("value");
+                                        String instance = state.getString("instance");
+                                        if (instance.equals(cp.getInstance())) {
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
+                                                            PercentType.valueOf(String.valueOf(value))));
+                                        }
+                                    } else if (memItem instanceof SwitchItem) {
+                                        boolean value = state.getBoolean("value");
+                                        if (value) {
+                                            Objects.requireNonNull(eventPublisher).post(
+                                                    ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.ON));
+                                        } else {
+                                            Objects.requireNonNull(eventPublisher).post(
+                                                    ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.OFF));
+                                        }
+                                    } else if (memItem instanceof NumberItem) {
+                                        int value = state.getInt("value");
+                                        String instance = state.getString("instance");
+                                        if (instance.equals(cp.getInstance())) {
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
+                                                            DecimalType.valueOf(String.valueOf(value))));
+                                        }
+                                    } else if (memItem instanceof StringItem) {
+                                        Objects.requireNonNull(eventPublisher).post(ItemEventFactory.createCommandEvent(
+                                                cp.getOhID(), StringType.valueOf(state.getString("value"))));
+                                    }
+                                }
+                            });
+
+                        }
+                    }
+                }
+            }
+            return "DONE";
+        } catch (Exception ex) {
+            return "ERROR";
+        }
+    }
     // private static JSONArray getCapabilitiesState(Item item, String status) {
     // JSONObject itemJson = new JSONObject();
     // JSONObject state = new JSONObject();

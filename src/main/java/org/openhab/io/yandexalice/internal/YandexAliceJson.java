@@ -301,4 +301,14 @@ public class YandexAliceJson {
             }
         }
     }
+
+    public void addError(String errorCode, String id) {
+        JSONArray device = returnRequest.getJSONObject("payload").getJSONArray("devices");
+        for (int i = 0; i < device.length(); i++) {
+            if (device.getJSONObject(i).getString("id").equals(id)) {
+                device.getJSONObject(i).put("error_code", errorCode);
+                returnRequest.getJSONObject("payload").put("devices", device);
+            }
+        }
+    }
 }
