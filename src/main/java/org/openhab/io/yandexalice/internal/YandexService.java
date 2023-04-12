@@ -64,6 +64,7 @@ import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
+import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingRegistry;
 import org.openhab.core.thing.ThingStatus;
@@ -111,7 +112,7 @@ public class YandexService implements EventSubscriber {
     // private final HashMap<String, String> yandexId = new HashMap<>();
     private static boolean action;
     // private String yandexToken = "";
-    private YandexAliceCredits credit = new YandexAliceCredits();
+    private final YandexAliceCredits credit = new YandexAliceCredits();
     private static String uuid = "";
     private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
     private @Nullable ScheduledFuture<?> refreshPollingJob;
@@ -405,7 +406,7 @@ public class YandexService implements EventSubscriber {
             if (yDev != null) {
                 if (itemRegistry != null) {
                     Item item = Objects.requireNonNull(itemRegistry).getItem(yDev.getId());
-                    Collection<ItemChannelLink> lnk = link.getLinks(item.getName());
+                    Collection<ItemChannelLink> lnk = Objects.requireNonNull(link).getLinks(item.getName());
                     boolean realDevice = false;
                     var getStatusObj = new Object() {
                         ThingStatus status = ThingStatus.UNKNOWN;
@@ -416,10 +417,12 @@ public class YandexService implements EventSubscriber {
                     lnk.forEach(itemChannelLink -> {
                         String iname = itemChannelLink.getItemName();
                         logger.debug("linked item {} to {} channel", iname, itemChannelLink.getLinkedUID().getId());
-                        Thing cnl = things
-                                .get(things.getChannel(itemChannelLink.getLinkedUID()).getUID().getThingUID());
-                        logger.debug("status thing {}", cnl.getStatus().name());
-                        getStatusObj.status = cnl.getStatus();
+                        Channel cnl = Objects.requireNonNull(things).getChannel(itemChannelLink.getLinkedUID());
+                        if (cnl != null) {
+                            Thing tng = Objects.requireNonNull(things).get(cnl.getUID().getThingUID());
+                            logger.debug("status thing {}", Objects.requireNonNull(tng).getStatus().name());
+                            getStatusObj.status = tng.getStatus();
+                        }
                     });
                     if (realDevice) {
                         if (!getStatusObj.status.equals(ThingStatus.ONLINE)) {
@@ -981,17 +984,19 @@ public class YandexService implements EventSubscriber {
                 if ((itemRegistry != null) && (eventPublisher != null)) {
                     try {
                         Item item = Objects.requireNonNull(itemRegistry).getItem(id);
-                        Collection<ItemChannelLink> lnk = link.getLinks(item.getName());
+                        Collection<ItemChannelLink> lnk = Objects.requireNonNull(link).getLinks(item.getName());
                         if (!lnk.isEmpty()) {
                             realDevice = true;
                         }
                         lnk.forEach(itemChannelLink -> {
                             String iname = itemChannelLink.getItemName();
                             logger.debug("linked item {} to {} channel", iname, itemChannelLink.getLinkedUID().getId());
-                            Thing cnl = things
-                                    .get(things.getChannel(itemChannelLink.getLinkedUID()).getUID().getThingUID());
-                            logger.debug("status thing {}", cnl.getStatus().name());
-                            getStatusObj.status = cnl.getStatus();
+                            Channel cnl = Objects.requireNonNull(things).getChannel(itemChannelLink.getLinkedUID());
+                            if (cnl != null) {
+                                Thing tng = Objects.requireNonNull(things).get(cnl.getUID().getThingUID());
+                                logger.debug("status thing {}", Objects.requireNonNull(tng).getStatus().name());
+                                getStatusObj.status = tng.getStatus();
+                            }
                         });
                         String status;
                         if (realDevice) {
