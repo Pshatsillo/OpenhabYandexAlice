@@ -219,6 +219,8 @@ public class YandexService implements EventSubscriber {
     @Override
     public void receive(Event event) {
         // TODO Action
+        logger.debug("event {}, {}, {}, {}, {}", event.getPayload(), event.getSource(), event.getType(),
+                event.getTopic(), event);
         if (!action) {
             ItemStateEvent ise = (ItemStateEvent) event;
             String name = ise.getItemName();
@@ -982,6 +984,7 @@ public class YandexService implements EventSubscriber {
                     ThingStatus status = ThingStatus.UNKNOWN;
                 };
                 if ((itemRegistry != null) && (eventPublisher != null)) {
+                    logger.debug("setItemState {}", id);
                     try {
                         Item item = Objects.requireNonNull(itemRegistry).getItem(id);
                         Collection<ItemChannelLink> lnk = Objects.requireNonNull(link).getLinks(item.getName());
