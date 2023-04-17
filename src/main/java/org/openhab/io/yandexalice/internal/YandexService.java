@@ -652,295 +652,298 @@ public class YandexService implements EventSubscriber {
                                 dev.devType, item.getState());
                         json.createDevice(yDev);
                         for (Item grpItem : grpMembers) {
-                            if (grpItem.getType().equals("Switch")) {
-                                if (grpItem.hasTag("toggle")) {
-                                    // TODO toggle
-                                    logger.debug("this is GROUP Switch TOGGLE mode");
+                            if (!grpItem.hasTag("noyandex")) {
+                                if (grpItem.getType().equals("Switch")) {
+                                    if (grpItem.hasTag("toggle")) {
+                                        // TODO toggle
+                                        logger.debug("this is GROUP Switch TOGGLE mode");
+                                        Set<String> tags = grpItem.getTags();
+                                        var ref = new Object() {
+                                            String instance = "";
+                                        };
+                                        for (String tag : tags) {
+                                            YandexDevice.TOGGLE_LIST.forEach((v) -> {
+                                                if (v.contains(tag.toLowerCase())) {
+                                                    ref.instance = v;
+                                                }
+                                            });
+                                        }
+                                        yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_TOGGLE, ref.instance,
+                                                "", 0, 0, 0);
+                                    } else {
+                                        logger.debug("this is GROUP Switch ON_OFF mode");
+                                        yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_ON_OFF);
+                                    }
+                                } else if (grpItem instanceof ColorItem) {
+                                    yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_COLOR_SETTINGS);
+                                    json.addCapabilities(yDev);
+                                } else if ((grpItem instanceof NumberItem) || (grpItem instanceof DimmerItem)) {
+                                    logger.debug("this is GROUP Number ");
                                     Set<String> tags = grpItem.getTags();
+                                    String capName = "";
                                     var ref = new Object() {
                                         String instance = "";
+                                        String unit = "";
                                     };
+                                    int minRange = 0, maxRange = 100, precision = 1;
+                                    StateDescription sd = grpItem.getStateDescription();
+                                    if (sd != null) {
+                                        if (sd.getMinimum() != null) {
+                                            BigDecimal mr = sd.getMinimum();
+                                            if (mr != null) {
+                                                minRange = mr.intValue();
+                                            }
+                                        }
+                                        if (sd.getMaximum() != null) {
+                                            BigDecimal mr = sd.getMaximum();
+                                            if (mr != null) {
+                                                maxRange = mr.intValue();
+                                            }
+                                        }
+
+                                        if (sd.getStep() != null) {
+                                            BigDecimal st = sd.getStep();
+                                            if (st != null) {
+                                                precision = st.intValue();
+                                            }
+                                        }
+                                    }
+                                    // int minRange = 0, maxRange = 0, precision = 0;
                                     for (String tag : tags) {
-                                        YandexDevice.TOGGLE_LIST.forEach((v) -> {
+                                        if (YandexDevice.CAP_RANGE.contains(tag)) {
+                                            capName = YandexDevice.CAP_RANGE;
+                                        } else if (tag.contains("min=")) {
+                                            minRange = Integer.parseInt(tag.split("=")[1]);
+                                        } else if (tag.contains("max=")) {
+                                            maxRange = Integer.parseInt(tag.split("=")[1]);
+                                        } else if (tag.contains("step=")) {
+                                            precision = Integer.parseInt(tag.split("=")[1]);
+                                        }
+                                        YandexDevice.RANGE_LIST.forEach((v) -> {
                                             if (v.contains(tag.toLowerCase())) {
                                                 ref.instance = v;
+                                                switch (v) {
+                                                    case YandexDevice.RANGE_TEMPERATURE:
+                                                        ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
+                                                        break;
+                                                    case YandexDevice.RANGE_BRIGHTNESS:
+                                                    case YandexDevice.RANGE_HUMIDITY:
+                                                    case YandexDevice.RANGE_OPEN:
+                                                        ref.unit = YandexDevice.UNIT_PERCENT;
+                                                        break;
+                                                    case YandexDevice.RANGE_CHANNEL:
+                                                        ref.unit = "";
+                                                        break;
+                                                    case YandexDevice.RANGE_VOLUME:
+                                                        if ("percent".equals(tag)) {
+                                                            ref.unit = YandexDevice.UNIT_PERCENT;
+                                                        } else
+                                                            ref.unit = "";
+                                                        break;
+                                                }
+                                            }
+                                        });
+                                        YandexDevice.FLOAT_LIST.forEach((v) -> {
+                                            if (v.contains(tag.toLowerCase())) {
+                                                ref.instance = v;
+                                                switch (v) {
+                                                    case YandexDevice.FLOAT_AMPERAGE:
+                                                        ref.unit = YandexDevice.UNIT_AMPERE;
+                                                        break;
+                                                    case YandexDevice.FLOAT_BATTERY_LEVEL:
+                                                    case YandexDevice.FLOAT_WATER_LEVEL:
+                                                    case YandexDevice.FLOAT_HUMIDITY:
+                                                    case YandexDevice.FLOAT_FOOD_LEVEL:
+                                                        ref.unit = YandexDevice.UNIT_PERCENT;
+                                                        break;
+                                                    case YandexDevice.FLOAT_CO2:
+                                                        ref.unit = YandexDevice.UNIT_PPM;
+                                                        break;
+                                                    case YandexDevice.FLOAT_ILLUMINATION:
+                                                        ref.unit = YandexDevice.UNIT_LUX;
+                                                        break;
+                                                    case YandexDevice.FLOAT_PM1_DENSITY:
+                                                    case YandexDevice.FLOAT_TVOC:
+                                                    case YandexDevice.FLOAT_PM10_DENSITY:
+                                                    case YandexDevice.FLOAT_PM25_DENSITY:
+                                                        ref.unit = YandexDevice.UNIT_MCG_M3;
+                                                        break;
+                                                    case YandexDevice.FLOAT_POWER:
+                                                        ref.unit = YandexDevice.UNIT_WATT;
+                                                        break;
+                                                    case YandexDevice.FLOAT_PRESSURE:
+                                                        ref.unit = YandexDevice.UNIT_BAR;
+                                                        break;
+                                                    case YandexDevice.FLOAT_TEMP:
+                                                        ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
+                                                        break;
+                                                    case YandexDevice.FLOAT_VOLTAGE:
+                                                        ref.unit = YandexDevice.UNIT_VOLT;
+                                                        break;
+
+                                                }
                                             }
                                         });
                                     }
-                                    yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_TOGGLE, ref.instance, "",
-                                            0, 0, 0);
-                                } else {
-                                    logger.debug("this is GROUP Switch ON_OFF mode");
-                                    yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_ON_OFF);
-                                }
-                            } else if (grpItem instanceof ColorItem) {
-                                yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_COLOR_SETTINGS);
-                                json.addCapabilities(yDev);
-                            } else if ((grpItem instanceof NumberItem) || (grpItem instanceof DimmerItem)) {
-                                logger.debug("this is GROUP Number ");
-                                Set<String> tags = grpItem.getTags();
-                                String capName = "";
-                                var ref = new Object() {
+                                    if (capName.isEmpty()) {
+                                        yDev.addProperties(grpItem.getName(), YandexDevice.PROP_FLOAT, ref.instance,
+                                                ref.unit);
+                                    } else {
+                                        yDev.addCapabilities(grpItem.getName(), capName, ref.instance, ref.unit,
+                                                minRange, maxRange, precision);
+                                    }
+                                } else if (grpItem instanceof StringItem) {
+                                    String capName = "";
                                     String instance = "";
-                                    String unit = "";
-                                };
-                                int minRange = 0, maxRange = 100, precision = 1;
-                                StateDescription sd = grpItem.getStateDescription();
-                                if (sd != null) {
-                                    if (sd.getMinimum() != null) {
-                                        BigDecimal mr = sd.getMinimum();
-                                        if (mr != null) {
-                                            minRange = mr.intValue();
+                                    logger.debug("This is string");
+                                    Set<String> tags = grpItem.getTags();
+                                    Collection<String> modesCol = null;
+                                    ArrayList<String> toRemove = new ArrayList<>();
+                                    ArrayList<String> toAdd = new ArrayList<>();
+                                    List<StateOption> opt = null;
+                                    StateDescription options = grpItem.getStateDescription();
+                                    boolean setDefaultValues = true;
+                                    if (options != null) {
+                                        opt = options.getOptions();
+                                        if (!opt.isEmpty()) {
+                                            if (!opt.get(0).getValue().isEmpty())
+                                                setDefaultValues = false;
                                         }
                                     }
-                                    if (sd.getMaximum() != null) {
-                                        BigDecimal mr = sd.getMaximum();
-                                        if (mr != null) {
-                                            maxRange = mr.intValue();
-                                        }
-                                    }
-
-                                    if (sd.getStep() != null) {
-                                        BigDecimal st = sd.getStep();
-                                        if (st != null) {
-                                            precision = st.intValue();
-                                        }
-                                    }
-                                }
-                                // int minRange = 0, maxRange = 0, precision = 0;
-                                for (String tag : tags) {
-                                    if (YandexDevice.CAP_RANGE.contains(tag)) {
-                                        capName = YandexDevice.CAP_RANGE;
-                                    } else if (tag.contains("min=")) {
-                                        minRange = Integer.parseInt(tag.split("=")[1]);
-                                    } else if (tag.contains("max=")) {
-                                        maxRange = Integer.parseInt(tag.split("=")[1]);
-                                    } else if (tag.contains("step=")) {
-                                        precision = Integer.parseInt(tag.split("=")[1]);
-                                    }
-                                    YandexDevice.RANGE_LIST.forEach((v) -> {
-                                        if (v.contains(tag.toLowerCase())) {
-                                            ref.instance = v;
-                                            switch (v) {
-                                                case YandexDevice.RANGE_TEMPERATURE:
-                                                    ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
-                                                    break;
-                                                case YandexDevice.RANGE_BRIGHTNESS:
-                                                case YandexDevice.RANGE_HUMIDITY:
-                                                case YandexDevice.RANGE_OPEN:
-                                                    ref.unit = YandexDevice.UNIT_PERCENT;
-                                                    break;
-                                                case YandexDevice.RANGE_CHANNEL:
-                                                    ref.unit = "";
-                                                    break;
-                                                case YandexDevice.RANGE_VOLUME:
-                                                    if ("percent".equals(tag)) {
-                                                        ref.unit = YandexDevice.UNIT_PERCENT;
-                                                    } else
-                                                        ref.unit = "";
-                                                    break;
-                                            }
-                                        }
-                                    });
-                                    YandexDevice.FLOAT_LIST.forEach((v) -> {
-                                        if (v.contains(tag.toLowerCase())) {
-                                            ref.instance = v;
-                                            switch (v) {
-                                                case YandexDevice.FLOAT_AMPERAGE:
-                                                    ref.unit = YandexDevice.UNIT_AMPERE;
-                                                    break;
-                                                case YandexDevice.FLOAT_BATTERY_LEVEL:
-                                                case YandexDevice.FLOAT_WATER_LEVEL:
-                                                case YandexDevice.FLOAT_HUMIDITY:
-                                                case YandexDevice.FLOAT_FOOD_LEVEL:
-                                                    ref.unit = YandexDevice.UNIT_PERCENT;
-                                                    break;
-                                                case YandexDevice.FLOAT_CO2:
-                                                    ref.unit = YandexDevice.UNIT_PPM;
-                                                    break;
-                                                case YandexDevice.FLOAT_ILLUMINATION:
-                                                    ref.unit = YandexDevice.UNIT_LUX;
-                                                    break;
-                                                case YandexDevice.FLOAT_PM1_DENSITY:
-                                                case YandexDevice.FLOAT_TVOC:
-                                                case YandexDevice.FLOAT_PM10_DENSITY:
-                                                case YandexDevice.FLOAT_PM25_DENSITY:
-                                                    ref.unit = YandexDevice.UNIT_MCG_M3;
-                                                    break;
-                                                case YandexDevice.FLOAT_POWER:
-                                                    ref.unit = YandexDevice.UNIT_WATT;
-                                                    break;
-                                                case YandexDevice.FLOAT_PRESSURE:
-                                                    ref.unit = YandexDevice.UNIT_BAR;
-                                                    break;
-                                                case YandexDevice.FLOAT_TEMP:
-                                                    ref.unit = YandexDevice.UNIT_TEMP_CELSIUS;
-                                                    break;
-                                                case YandexDevice.FLOAT_VOLTAGE:
-                                                    ref.unit = YandexDevice.UNIT_VOLT;
-                                                    break;
-
-                                            }
-                                        }
-                                    });
-                                }
-                                if (capName.isEmpty()) {
-                                    yDev.addProperties(grpItem.getName(), YandexDevice.PROP_FLOAT, ref.instance,
-                                            ref.unit);
-                                } else {
-                                    yDev.addCapabilities(grpItem.getName(), capName, ref.instance, ref.unit, minRange,
-                                            maxRange, precision);
-                                }
-                            } else if (grpItem instanceof StringItem) {
-                                String capName = "";
-                                String instance = "";
-                                logger.debug("This is string");
-                                Set<String> tags = grpItem.getTags();
-                                Collection<String> modesCol = null;
-                                ArrayList<String> toRemove = new ArrayList<>();
-                                ArrayList<String> toAdd = new ArrayList<>();
-                                List<StateOption> opt = null;
-                                StateDescription options = grpItem.getStateDescription();
-                                boolean setDefaultValues = true;
-                                if (options != null) {
-                                    opt = options.getOptions();
-                                    if (!opt.isEmpty()) {
-                                        if (!opt.get(0).getValue().isEmpty())
-                                            setDefaultValues = false;
-                                    }
-                                }
-                                for (String tag : tags) {
-                                    if ("scenes".equalsIgnoreCase(tag)) {
-                                        ArrayList<String> scenes = new ArrayList<>();
-                                        if (options != null) {
-                                            opt = options.getOptions();
-                                            if (!opt.isEmpty()) {
-                                                if (!opt.get(0).getValue().isEmpty()) {
-                                                    for (StateOption stateOption : opt) {
-                                                        if (YandexDevice.SCENES_LIST.contains(stateOption.getValue())) {
-                                                            scenes.add(stateOption.getValue());
-                                                        } else
-                                                            logger.debug("I don't know scene {}",
-                                                                    stateOption.getValue());
+                                    for (String tag : tags) {
+                                        if ("scenes".equalsIgnoreCase(tag)) {
+                                            ArrayList<String> scenes = new ArrayList<>();
+                                            if (options != null) {
+                                                opt = options.getOptions();
+                                                if (!opt.isEmpty()) {
+                                                    if (!opt.get(0).getValue().isEmpty()) {
+                                                        for (StateOption stateOption : opt) {
+                                                            if (YandexDevice.SCENES_LIST
+                                                                    .contains(stateOption.getValue())) {
+                                                                scenes.add(stateOption.getValue());
+                                                            } else
+                                                                logger.debug("I don't know scene {}",
+                                                                        stateOption.getValue());
+                                                        }
+                                                        // yDev.setSceneColorCapabilities(scenes, grpItem.getName());
                                                     }
-                                                    // yDev.setSceneColorCapabilities(scenes, grpItem.getName());
+                                                }
+                                            }
+                                            for (String scnTags : tags) {
+                                                if (YandexDevice.SCENES_LIST.contains(scnTags.toLowerCase())) {
+                                                    YandexDevice.SCENES_LIST.forEach((list) -> {
+                                                        if (list.equals(scnTags)) {
+                                                            scenes.add(scnTags);
+                                                        }
+                                                    });
+
+                                                }
+                                                if (scenes.isEmpty()) {
+                                                    yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
+                                                            grpItem.getName());
+                                                } else {
+                                                    yDev.setSceneColorCapabilities(scenes, grpItem.getName());
                                                 }
                                             }
                                         }
-                                        for (String scnTags : tags) {
-                                            if (YandexDevice.SCENES_LIST.contains(scnTags.toLowerCase())) {
-                                                YandexDevice.SCENES_LIST.forEach((list) -> {
-                                                    if (list.equals(scnTags)) {
-                                                        scenes.add(scnTags);
+                                        if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
+                                            capName = YandexDevice.CAP_MODE;
+                                        }
+                                        if (tag.equalsIgnoreCase(YandexDevice.MODE_CLEANUP)) {
+                                            instance = YandexDevice.MODE_CLEANUP;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_CLEANUP);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_COFFEE)) {
+                                            instance = YandexDevice.MODE_COFFEE;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_COFFEE);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_DISHWASHING)) {
+                                            instance = YandexDevice.MODE_DISHWASHING;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_DISHWASHING);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_FAN_SPEED)) {
+                                            instance = YandexDevice.MODE_FAN_SPEED;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_FAN_SPEED);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_HEAT)) {
+                                            instance = YandexDevice.MODE_HEAT;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_HEAT);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_INPUT_SOURCE)) {
+                                            instance = YandexDevice.MODE_INPUT_SOURCE;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_INPUT_SOURCE);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_PROGRAM)) {
+                                            instance = YandexDevice.MODE_PROGRAM;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_PROGRAM);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_SWING)) {
+                                            instance = YandexDevice.MODE_SWING;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_SWING);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_THERMOSTAT)) {
+                                            instance = YandexDevice.MODE_THERMOSTAT;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_THERMOSTAT);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_TEA)) {
+                                            instance = YandexDevice.MODE_TEA;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_TEA);
+                                            }
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.MODE_WORK_SPEED)) {
+                                            instance = YandexDevice.MODE_WORK_SPEED;
+                                            if (setDefaultValues) {
+                                                modesCol = new ArrayList<>(YandexDevice.DEFAULT_WORK_SPEED);
+                                            }
+                                        }
+                                        if (setDefaultValues) {
+                                            if (tag.toLowerCase().startsWith("-")) {
+                                                YandexDevice.OPER_LIST.forEach((ops) -> {
+                                                    if (ops.equals(tag.toLowerCase().substring(1))) {
+                                                        toRemove.add(tag.toLowerCase().substring(1));
                                                     }
                                                 });
-
+                                            } else if (tag.toLowerCase().startsWith("+")) {
+                                                YandexDevice.OPER_LIST.forEach((ops) -> {
+                                                    if (ops.equals(tag.toLowerCase().substring(1))) {
+                                                        toAdd.add(tag.toLowerCase().substring(1));
+                                                    }
+                                                });
                                             }
-                                            if (scenes.isEmpty()) {
-                                                yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
-                                                        grpItem.getName());
-                                            } else {
-                                                yDev.setSceneColorCapabilities(scenes, grpItem.getName());
+                                        }
+                                    }
+                                    if (!setDefaultValues) {
+                                        modesCol = new ArrayList<>();
+                                        if (opt != null) {
+                                            for (StateOption stateOption : opt) {
+                                                if (YandexDevice.OPER_LIST.contains(stateOption.getValue())) {
+                                                    modesCol.add(stateOption.getValue());
+                                                } else
+                                                    logger.debug("I don't know operation {}", stateOption.getValue());
                                             }
-                                        }
+                                        } else
+                                            logger.debug("options is null");
                                     }
-                                    if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
-                                        capName = YandexDevice.CAP_MODE;
+                                    if (modesCol != null) {
+                                        modesCol.addAll(toAdd);
+                                        modesCol.removeAll(toRemove);
+                                        logger.warn("Group init complete. modesCol: {}, toRemove {}, toAdd {}",
+                                                modesCol, toRemove, toAdd);
+                                        if (!modesCol.isEmpty()) {
+                                            yDev.addCapabilities(grpItem.getName(), capName, instance, modesCol);
+                                        }
+                                    } else {
+                                        logger.debug("modesCol is null!");
                                     }
-                                    if (tag.equalsIgnoreCase(YandexDevice.MODE_CLEANUP)) {
-                                        instance = YandexDevice.MODE_CLEANUP;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_CLEANUP);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_COFFEE)) {
-                                        instance = YandexDevice.MODE_COFFEE;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_COFFEE);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_DISHWASHING)) {
-                                        instance = YandexDevice.MODE_DISHWASHING;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_DISHWASHING);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_FAN_SPEED)) {
-                                        instance = YandexDevice.MODE_FAN_SPEED;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_FAN_SPEED);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_HEAT)) {
-                                        instance = YandexDevice.MODE_HEAT;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_HEAT);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_INPUT_SOURCE)) {
-                                        instance = YandexDevice.MODE_INPUT_SOURCE;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_INPUT_SOURCE);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_PROGRAM)) {
-                                        instance = YandexDevice.MODE_PROGRAM;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_PROGRAM);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_SWING)) {
-                                        instance = YandexDevice.MODE_SWING;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_SWING);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_THERMOSTAT)) {
-                                        instance = YandexDevice.MODE_THERMOSTAT;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_THERMOSTAT);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_TEA)) {
-                                        instance = YandexDevice.MODE_TEA;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_TEA);
-                                        }
-                                    } else if (tag.equalsIgnoreCase(YandexDevice.MODE_WORK_SPEED)) {
-                                        instance = YandexDevice.MODE_WORK_SPEED;
-                                        if (setDefaultValues) {
-                                            modesCol = new ArrayList<>(YandexDevice.DEFAULT_WORK_SPEED);
-                                        }
-                                    }
-                                    if (setDefaultValues) {
-                                        if (tag.toLowerCase().startsWith("-")) {
-                                            YandexDevice.OPER_LIST.forEach((ops) -> {
-                                                if (ops.equals(tag.toLowerCase().substring(1))) {
-                                                    toRemove.add(tag.toLowerCase().substring(1));
-                                                }
-                                            });
-                                        } else if (tag.toLowerCase().startsWith("+")) {
-                                            YandexDevice.OPER_LIST.forEach((ops) -> {
-                                                if (ops.equals(tag.toLowerCase().substring(1))) {
-                                                    toAdd.add(tag.toLowerCase().substring(1));
-                                                }
-                                            });
-                                        }
-                                    }
-                                }
-                                if (!setDefaultValues) {
-                                    modesCol = new ArrayList<>();
-                                    if (opt != null) {
-                                        for (StateOption stateOption : opt) {
-                                            if (YandexDevice.OPER_LIST.contains(stateOption.getValue())) {
-                                                modesCol.add(stateOption.getValue());
-                                            } else
-                                                logger.debug("I don't know operation {}", stateOption.getValue());
-                                        }
-                                    } else
-                                        logger.debug("options is null");
-                                }
-                                if (modesCol != null) {
-                                    modesCol.addAll(toAdd);
-                                    modesCol.removeAll(toRemove);
-                                    logger.warn("Group init complete. modesCol: {}, toRemove {}, toAdd {}", modesCol,
-                                            toRemove, toAdd);
-                                    if (!modesCol.isEmpty()) {
-                                        yDev.addCapabilities(grpItem.getName(), capName, instance, modesCol);
-                                    }
-                                } else {
-                                    logger.debug("modesCol is null!");
                                 }
                             }
                         }
