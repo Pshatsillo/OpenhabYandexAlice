@@ -250,6 +250,45 @@ public class YandexAliceJson {
             }
             props.put(new JSONObject().put("type", prop.getPropName()).put("state",
                     new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+        } else if (state instanceof OnOffType) {
+            if (prop.getInstance().equals(YandexDevice.EVENT_MOTION)) {
+                String st;
+                if (state.toString().equals("ON")) {
+                    st = "detected";
+                } else {
+                    st = "not_detected";
+                }
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                        new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+            } else if (prop.getInstance().equals(YandexDevice.EVENT_WATER_LEAK)) {
+                String st;
+                if (state.toString().equals("ON")) {
+                    st = "leak";
+                } else {
+                    st = "dry";
+                }
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                        new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+            } else if ((prop.getInstance().equals(YandexDevice.EVENT_SMOKE))
+                    || (prop.getInstance().equals(YandexDevice.EVENT_GAS))) {
+                String st;
+                if (state.toString().equals("ON")) {
+                    st = "detected";
+                } else {
+                    st = "not_detected";
+                }
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                        new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+            } else if (prop.getInstance().equals(YandexDevice.EVENT_BATTERY_LEVEL)) {
+                String st;
+                if (state.toString().equals("ON")) {
+                    st = "low";
+                } else {
+                    st = "normal";
+                }
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                        new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+            }
         }
         returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties", props);
     }

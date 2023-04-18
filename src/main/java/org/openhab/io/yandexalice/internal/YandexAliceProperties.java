@@ -39,9 +39,29 @@ public class YandexAliceProperties {
         this.unit = unit;
         this.ohItemID = ohItemID;
         if (propName.equals(YandexDevice.PROP_EVENT)) {
-            if (instance.equals(YandexDevice.EVENT_OPEN)) {
-                events = new JSONArray().put(new JSONObject().put("value", "opened"))
-                        .put(new JSONObject().put("value", "closed"));
+            switch (instance) {
+                case YandexDevice.EVENT_OPEN:
+                    events = new JSONArray().put(new JSONObject().put("value", "opened"))
+                            .put(new JSONObject().put("value", "closed"));
+                    break;
+                case YandexDevice.EVENT_MOTION:
+                    events = new JSONArray().put(new JSONObject().put("value", "detected"))
+                            .put(new JSONObject().put("value", "not_detected"));
+                    break;
+                case YandexDevice.EVENT_WATER_LEAK:
+                    events = new JSONArray().put(new JSONObject().put("value", "dry"))
+                            .put(new JSONObject().put("value", "leak"));
+                    break;
+                case YandexDevice.EVENT_SMOKE:
+                case YandexDevice.EVENT_GAS:
+                    events = new JSONArray().put(new JSONObject().put("value", "detected"))
+                            .put(new JSONObject().put("value", "not_detected"))
+                            .put(new JSONObject().put("value", "high"));
+                    break;
+                case YandexDevice.EVENT_BATTERY_LEVEL:
+                    events = new JSONArray().put(new JSONObject().put("value", "low"))
+                            .put(new JSONObject().put("value", "normal"));
+                    break;
             }
         }
     }
@@ -54,9 +74,19 @@ public class YandexAliceProperties {
         this.propName = propName;
         this.instance = instance;
         if (propName.equals(YandexDevice.PROP_EVENT)) {
-            if (instance.equals(YandexDevice.EVENT_OPEN)) {
-                events = new JSONArray().put(new JSONObject().put("value", "opened"))
-                        .put(new JSONObject().put("value", "closed"));
+            switch (instance) {
+                case YandexDevice.EVENT_OPEN:
+                    events = new JSONArray().put(new JSONObject().put("value", "opened"))
+                            .put(new JSONObject().put("value", "closed"));
+                    break;
+                case YandexDevice.EVENT_MOTION:
+                    events = new JSONArray().put(new JSONObject().put("value", "detected"))
+                            .put(new JSONObject().put("value", "not_detected"));
+                    break;
+                case YandexDevice.EVENT_WATER_LEAK:
+                    events = new JSONArray().put(new JSONObject().put("value", "dry"))
+                            .put(new JSONObject().put("value", "leak"));
+                    break;
             }
         }
     }
