@@ -975,6 +975,16 @@ public class YandexService implements EventSubscriber {
                                     } else {
                                         logger.debug("modesCol is null!");
                                     }
+                                } else if (grpItem instanceof ContactItem) {
+                                    if ((grpItem.hasTag("Door")) || (grpItem.hasTag("GarageDoor"))
+                                            || (grpItem.hasTag("FrontDoor")) || (grpItem.hasTag("CellarDoor"))
+                                            || (grpItem.hasTag("SideDoor")) || (grpItem.hasTag("BackDoor"))) {
+                                        yDev.addProperties(grpItem.getName(), YandexDevice.PROP_EVENT,
+                                                YandexDevice.EVENT_OPEN, "");
+                                    } else if ((grpItem.hasTag("Blinds")) || (grpItem.hasTag("Window"))) {
+                                        yDev.addProperties(grpItem.getName(), YandexDevice.PROP_EVENT,
+                                                YandexDevice.EVENT_OPEN, "");
+                                    }
                                 }
                             }
                         }
