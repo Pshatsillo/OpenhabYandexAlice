@@ -1,12 +1,14 @@
 # OpenHab connector for Yandex Alice
 
-В разработке. Требуется посильная помощь
+#### По-умолчанию биндинг настроен для работы с облаком https://ohcloud.ru/
+В Openhab Market скачиваем последнюю версию, регистрируемся в облаке  https://ohcloud.ru/, устанавливаем его как основное
+В Умном Доме Яндекс находим навык OH Cloud
+
+Для работы с частными навыками требуется следующее:
 
 Клонируем в папку openhab-addons\bundles
 
 ```git submodule add https://github.com/Pshatsillo/OpenhabYandexAlice.git org.openhab.io.yandexalice```
-
-### Данный плагин работает только с частными версиями Openhab-cloud!
 
 Инструкция по установке:
 
