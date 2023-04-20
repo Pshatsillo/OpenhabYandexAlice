@@ -30,7 +30,7 @@ public class YandexAliceCapabilities {
     String capabilityName = "";
     String instance;
     private String unit;
-    private int precisionRange;
+    private double precisionRange;
     private int maxRange;
     private int minRange;
     private String ohID;
@@ -85,7 +85,7 @@ public class YandexAliceCapabilities {
         this.unit = unit;
     }
 
-    public void setRange(int minRange, int maxRange, int precisionRange) {
+    public void setRange(int minRange, int maxRange, double precisionRange) {
         this.minRange = minRange;
         this.maxRange = maxRange;
         this.precisionRange = precisionRange;
@@ -99,7 +99,7 @@ public class YandexAliceCapabilities {
         return maxRange;
     }
 
-    public int getPrecision() {
+    public double getPrecision() {
         return precisionRange;
     }
 

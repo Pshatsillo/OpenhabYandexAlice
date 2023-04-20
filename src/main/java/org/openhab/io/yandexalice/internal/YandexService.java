@@ -633,7 +633,7 @@ public class YandexService implements EventSubscriber {
                         json.createDevice(yDev);
                         yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.EVENT_OPEN);
                         yDev.addCapabilities(item.getName(), YandexDevice.CAP_RANGE, YandexDevice.EVENT_OPEN,
-                                YandexDevice.UNIT_PERCENT, 0, 100, 1);
+                                YandexDevice.UNIT_PERCENT, 0, 100, 1.0);
                         // yDev.addCapabilities(YandexDevice.CAP_ON_OFF);
                         json.addProperties(yDev);
                         json.addCapabilities(yDev);
@@ -674,7 +674,7 @@ public class YandexService implements EventSubscriber {
                                             });
                                         }
                                         yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_TOGGLE, ref.instance,
-                                                "", 0, 0, 0);
+                                                "", 0, 0, 0.0);
                                     } else if (grpItem.hasTag(YandexDevice.EVENT_MOTION)) {
                                         yDev.addProperties(grpItem.getName(), YandexDevice.PROP_EVENT,
                                                 YandexDevice.EVENT_MOTION, "");
@@ -699,7 +699,8 @@ public class YandexService implements EventSubscriber {
                                         String instance = "";
                                         String unit = "";
                                     };
-                                    int minRange = 0, maxRange = 100, precision = 1;
+                                    int minRange = 0, maxRange = 100;
+                                    double precision = 1.0;
                                     StateDescription sd = grpItem.getStateDescription();
                                     if (sd != null) {
                                         if (sd.getMinimum() != null) {
@@ -718,7 +719,7 @@ public class YandexService implements EventSubscriber {
                                         if (sd.getStep() != null) {
                                             BigDecimal st = sd.getStep();
                                             if (st != null) {
-                                                precision = st.intValue();
+                                                precision = st.doubleValue();
                                             }
                                         }
                                     }
@@ -731,7 +732,7 @@ public class YandexService implements EventSubscriber {
                                         } else if (tag.contains("max=")) {
                                             maxRange = Integer.parseInt(tag.split("=")[1]);
                                         } else if (tag.contains("step=")) {
-                                            precision = Integer.parseInt(tag.split("=")[1]);
+                                            precision = Double.parseDouble(tag.split("=")[1]);
                                         }
                                         YandexDevice.RANGE_LIST.forEach((v) -> {
                                             if (v.contains(tag.toLowerCase())) {
@@ -1140,7 +1141,7 @@ public class YandexService implements EventSubscriber {
                                                     ItemEventFactory.createCommandEvent(cp.getOhID(), OnOffType.OFF));
                                         }
                                     } else if (memItem instanceof NumberItem) {
-                                        int value = state.getInt("value");
+                                        double value = state.getDouble("value");
                                         String instance = state.getString("instance");
                                         if (instance.equals(cp.getInstance())) {
                                             Objects.requireNonNull(eventPublisher)
