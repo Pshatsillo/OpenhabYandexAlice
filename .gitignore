@@ -244,3 +244,4 @@ org.openhab.io.yandexalice.iml
 .idea/libraries/Maven__ch_qos_logback_logback_core_1_2_11.xml
 .idea/libraries/Maven__ch_qos_logback_logback_classic_1_2_11.xml
 /src/main/java/org/openhab/io/yandexalice/internal/YandexAliceCredits.java
+/.idea/
