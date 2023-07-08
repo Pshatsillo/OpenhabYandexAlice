@@ -13,6 +13,7 @@
 package org.openhab.io.yandexalice.internal;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -220,8 +221,8 @@ public class YandexService implements EventSubscriber {
     @Override
     public void receive(Event event) {
         // TODO Action
-        logger.debug("event {}, {}, {}, {}, {}", event.getPayload(), event.getSource(), event.getType(),
-                event.getTopic(), event);
+        // logger.debug("event {}, {}, {}, {}, {}", event.getPayload(), event.getSource(), event.getType(),
+        // event.getTopic(), event);
         try {
             if (!action) {
                 ItemStateEvent ise = (ItemStateEvent) event;
@@ -373,6 +374,8 @@ public class YandexService implements EventSubscriber {
         try {
             yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state");
             con = (HttpURLConnection) yandexURL.openConnection();
+            con.setConnectTimeout(1000);
+            con.setReadTimeout(4000);
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "OAuth " + credit.getoAuth());
             con.setRequestProperty("Content-Type", "application/json");
@@ -395,8 +398,8 @@ public class YandexService implements EventSubscriber {
             in.close();
             String result = response.toString().trim();
             logger.debug("input string from REST: {}", result);
-        } catch (Exception e) {
-            logger.debug("ERROR {}", e.getLocalizedMessage());
+        } catch (IOException e) {
+            logger.debug("ERROR {}", e.getMessage());
         }
     }
 

@@ -1,6 +1,7 @@
 # OpenHab connector for Yandex Alice
 
 #### По-умолчанию биндинг настроен для работы с облаком https://ohcloud.ru/
+
 В Openhab Market скачиваем последнюю версию, регистрируемся в облаке  https://ohcloud.ru/, устанавливаем его как основное
 В Умном Доме Яндекс находим навык OH Cloud
 
