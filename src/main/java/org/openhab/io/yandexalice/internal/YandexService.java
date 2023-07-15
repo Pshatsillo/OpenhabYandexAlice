@@ -1110,7 +1110,8 @@ public class YandexService implements EventSubscriber {
                 if (yaDev != null) {
                     List<YandexAliceCapabilities> caps = yaDev.getCapabilities();
                     for (YandexAliceCapabilities cp : caps) {
-                        if (cp.getCapabilityName().equals(type)) {
+                        if (cp.getCapabilityName().equals(type)
+                                && cp.getInstance().equals(state.getString("instance"))) {
                             grpMembers.forEach((memItem) -> {
                                 if (cp.getOhID().equals(memItem.getName())) {
                                     if (memItem instanceof ColorItem) {
