@@ -35,15 +35,15 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class YandexAliceJson {
 
-    String requestID = "";
+    //String requestID = "";
     JSONObject returnRequest = new JSONObject();
-    Logger log = LoggerFactory.getLogger(YandexAliceJson.class);
+    //Logger log = LoggerFactory.getLogger(YandexAliceJson.class);
 
     public YandexAliceJson(String requestID) {
         returnRequest.put("request_id", requestID);
         returnRequest.put("payload", new JSONObject());
         returnRequest.getJSONObject("payload").put("devices", new JSONArray());
-        this.requestID = requestID;
+        //this.requestID = requestID;
     }
 
     // public YandexAliceJson() {
