@@ -12,7 +12,14 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -361,11 +368,39 @@ public class YandexService implements EventSubscriber {
     }
 
     private void updateCallback(String json) {
-        YandexCallbackUpdate updateAliceItem = new YandexCallbackUpdate(json);
-        Thread updateAliceItemTread = new Thread(updateAliceItem);
-        updateAliceItemTread.setName("test");
-        updateAliceItemTread.start();
-        // logger.warn("Thread name is {}", updateAliceItemTread.getName());
+        logger.debug("updating. Json is: {}", json);
+        HttpURLConnection con;
+        URL yandexURL;
+        try {
+            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state");
+            con = (HttpURLConnection) yandexURL.openConnection();
+            con.setConnectTimeout(1000);
+            con.setReadTimeout(4000);
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Authorization", "OAuth " + credit.getoAuth());
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+            try (OutputStream os = con.getOutputStream()) {
+                byte[] input = json.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+
+            int code = con.getResponseCode();
+            // Map<String, List<String>> headers = con.getHeaderFields();
+            logger.debug("Response: {}, code {}", con.getResponseMessage(), code);
+            // InputStream resp = con.getInputStream();
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+            String result = response.toString().trim();
+            logger.debug("input string from REST: {}", result);
+        } catch (IOException e) {
+            logger.debug("ERROR {}", e.getMessage());
+        }
     }
 
     public static String getItemState(String json, @Nullable String header) {
@@ -1075,8 +1110,7 @@ public class YandexService implements EventSubscriber {
                 if (yaDev != null) {
                     List<YandexAliceCapabilities> caps = yaDev.getCapabilities();
                     for (YandexAliceCapabilities cp : caps) {
-                        if (cp.getCapabilityName().equals(type)
-                                && cp.getInstance().equals(state.getString("instance"))) {
+                        if (cp.getCapabilityName().equals(type)) {
                             grpMembers.forEach((memItem) -> {
                                 if (cp.getOhID().equals(memItem.getName())) {
                                     if (memItem instanceof ColorItem) {

@@ -24,8 +24,6 @@ import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.types.State;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The {@link YandexAliceJson} is responsible for JSON string generation
@@ -35,15 +33,15 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class YandexAliceJson {
 
-    //String requestID = "";
+    // String requestID = "";
     JSONObject returnRequest = new JSONObject();
-    //Logger log = LoggerFactory.getLogger(YandexAliceJson.class);
+    // Logger log = LoggerFactory.getLogger(YandexAliceJson.class);
 
     public YandexAliceJson(String requestID) {
         returnRequest.put("request_id", requestID);
         returnRequest.put("payload", new JSONObject());
         returnRequest.getJSONObject("payload").put("devices", new JSONArray());
-        //this.requestID = requestID;
+        // this.requestID = requestID;
     }
 
     // public YandexAliceJson() {
@@ -179,9 +177,9 @@ public class YandexAliceJson {
             // log.debug("HSB");
             caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
                     new JSONObject().put("instance", "hsv").put("value",
-                            new JSONObject().put("h", ((HSBType) state).getHue())
-                                    .put("s", ((HSBType) state).getSaturation())
-                                    .put("v", ((HSBType) state).getBrightness()))));
+                            new JSONObject().put("h", ((HSBType) state).getHue().intValue())
+                                    .put("s", ((HSBType) state).getSaturation().intValue())
+                                    .put("v", ((HSBType) state).getBrightness().intValue()))));
         } else if (state instanceof PercentType) {
             if (capability.getCapabilityName().equals(YandexDevice.CAP_ON_OFF)) {
                 boolean status = ((PercentType) state).intValue() > 0;

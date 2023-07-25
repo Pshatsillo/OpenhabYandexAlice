@@ -16,6 +16,7 @@
 1. Получаем доступ к облаку Openhab (или свой, или тот, у кого есть доступ к авторизации через Openhab) 
    * [Openhab-cloud](https://github.com/openhab/openhab-cloud)
    * Вносим в MongoDB Openhab запись для авторизации по Oauth  
+   
    ```
        use openhab
        db.oauth2clients.insert({ clientId: "<CLIENT-ID>", clientSecret: "<CLIENT SECRET>"})
@@ -23,6 +24,7 @@
        db.oauth2scopes.insert( { name : "Yandex Alice", description: "Access to openHAB Cloud specific API for Yandex Alice", } )
     
      ```
+   
    * Запоминаем логин и пароль <CLIENT-ID> - <CLIENT SECRET> - scope "yandex"
 2. Создаём навык в [Алисе](https://dialogs.yandex.ru/developer/).
    * Заполняем следующие поля: Endpoint URL, URL авторизации, URL для получения токена, Идентификатор приложения, Секрет приложения, Идентификатор группы действий (scope)
