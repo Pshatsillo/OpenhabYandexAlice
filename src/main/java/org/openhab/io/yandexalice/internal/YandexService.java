@@ -368,39 +368,9 @@ public class YandexService implements EventSubscriber {
     }
 
     private void updateCallback(String json) {
-        logger.debug("updating. Json is: {}", json);
-        HttpURLConnection con;
-        URL yandexURL;
-        try {
-            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state");
-            con = (HttpURLConnection) yandexURL.openConnection();
-            con.setConnectTimeout(1000);
-            con.setReadTimeout(4000);
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "OAuth " + credit.getoAuth());
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setDoOutput(true);
-            try (OutputStream os = con.getOutputStream()) {
-                byte[] input = json.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            int code = con.getResponseCode();
-            // Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}", con.getResponseMessage(), code);
-            // InputStream resp = con.getInputStream();
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-            }
-            in.close();
-            String result = response.toString().trim();
-            logger.debug("input string from REST: {}", result);
-        } catch (IOException e) {
-            logger.debug("ERROR {}", e.getMessage());
-        }
+        YandexCallbackUpdate updateAliceItem = new YandexCallbackUpdate(json);
+        Thread updateAliceItemTread = new Thread(updateAliceItem);
+        updateAliceItemTread.start();
     }
 
     public static String getItemState(String json, @Nullable String header) {
