@@ -4,3 +4,4 @@ org.openhab.io.yandexalice.iml
 /src/main/java/org/openhab/io/yandexalice/internal/YandexAliceCredits.java
 /.idea/
 /licenses/
+/.PVS-Studio/

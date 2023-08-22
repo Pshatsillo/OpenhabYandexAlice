@@ -66,6 +66,8 @@ public class YandexDevice {
     public static final String DEV_SENSOR_SMOKE = "devices.types.sensor.smoke";
     public static final String DEV_PET_DRINKING_FOUNTAIN = "devices.types.pet_drinking_fountain";
     public static final String DEV_PET_FEEDER = "devices.types.pet_feeder";
+    public static final String DEV_KETTLE = "devices.types.cooking.kettle";
+    public static final String DEV_COFFEE_MAKER = "devices.types.cooking.coffee_maker";
     public static final String DEV_OTHER = "devices.types.other";
     public static final String FLOAT_AMPERAGE = "amperage";
     public static final String FLOAT_BATTERY_LEVEL = "battery_level";
@@ -174,7 +176,8 @@ public class YandexDevice {
             DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT, DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX,
             DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER, DEV_VACUUM_CLEANER, DEV_WASHING_MACHINE, DEV_DISHWASHER,
             DEV_IRON, DEV_SENSOR_VIBRATION, DEV_SENSOR_ILLUMINATION, DEV_SENSOR_CLIMATE, DEV_SENSOR_WATER_LEAK,
-            DEV_SENSOR_BUTTON, DEV_SENSOR_GAS, DEV_SENSOR_SMOKE, DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_OTHER);
+            DEV_SENSOR_BUTTON, DEV_SENSOR_GAS, DEV_SENSOR_SMOKE, DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_KETTLE,
+            DEV_COFFEE_MAKER, DEV_OTHER);
     public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS, RANGE_CHANNEL, RANGE_HUMIDITY,
             RANGE_OPEN, RANGE_TEMPERATURE, RANGE_VOLUME);
     public static final Collection<String> OPER_LIST = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO,
