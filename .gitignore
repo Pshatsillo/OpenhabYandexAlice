@@ -5,3 +5,4 @@ org.openhab.io.yandexalice.iml
 /.idea/
 /licenses/
 /.PVS-Studio/
+.idea/compiler.xml

@@ -11,9 +11,6 @@
         <module name="org.openhab.binding.yandexalice" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="org.openhab.io.yandexalice" target="17" />
-    </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
