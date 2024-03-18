@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -37,40 +37,62 @@ public class YandexDevice {
     public static final String UNIT_WATT = "unit.watt";
     public static final String UNIT_BAR = "unit.pressure.bar";
     public static final String UNIT_MMHD = "unit.pressure.mmhg";
+    public static final String UNIT_KILOWATT_HOUR = "unit.kilowatt_hour";
+    public static final String UNIT_CUBIC_METER = "unit.cubic_meter";
+    public static final String UNIT_GIGACALORIE = "unit.gigacalorie";
     public static final String PROP_FLOAT = "devices.properties.float";
     public static final String PROP_EVENT = "devices.properties.event";
-    public static final String DEV_SENSOR = "devices.types.sensor";
-    public static final String DEV_SOCKET = "devices.types.socket";
-    public static final String DEV_SWITCH = "devices.types.switch";
+    // ---------------------------------------
+    public static final String DEV_CAMERA = "devices.types.camera";
+    public static final String DEV_COOKING = "devices.types.cooking";
+    public static final String DEV_COFFEE_MAKER = "devices.types.cooking.coffee_maker";
+    public static final String DEV_KETTLE = "devices.types.cooking.kettle";
+    public static final String DEV_MULTICOOKER = "devices.types.cooking.multicooker";
+    public static final String DEV_DISHWASHER = "devices.types.dishwasher";
+    public static final String DEV_HUMIDIFIER = "devices.types.humidifier";
+    public static final String DEV_IRON = "devices.types.iron";
     public static final String DEV_LIGHT = "devices.types.light";
-    public static final String DEV_OPENABLE = "devices.types.openable";
-    public static final String DEV_SENSOR_OPEN = "devices.types.sensor.open";
-    public static final String DEV_CURTAIN = "devices.types.openable.curtain";
-    public static final String DEV_THERMOSTAT = "devices.types.thermostat";
     public static final String DEV_MEDIA_DEVICE = "devices.types.media_device";
+    public static final String DEV_RECEIVER = "devices.types.media_device.receiver";
     public static final String DEV_TV = "devices.types.media_device.tv";
     public static final String DEV_TV_BOX = "devices.types.media_device.tv_box";
-    public static final String DEV_RECEIVER = "devices.types.media_device.receiver";
-    public static final String DEV_HUMIDIFIER = "devices.types.humidifier";
-    public static final String DEV_PURIFIER = "devices.types.purifier";
-    public static final String DEV_VACUUM_CLEANER = "devices.types.vacuum_cleaner";
-    public static final String DEV_WASHING_MACHINE = "devices.types.washing_machine";
-    public static final String DEV_DISHWASHER = "devices.types.dishwasher";
-    public static final String DEV_IRON = "devices.types.iron";
-    public static final String DEV_SENSOR_VIBRATION = "devices.types.sensor.vibration";
-    public static final String DEV_SENSOR_ILLUMINATION = "devices.types.sensor.illumination";
-    public static final String DEV_SENSOR_CLIMATE = "devices.types.sensor.climate";
-    public static final String DEV_SENSOR_WATER_LEAK = "devices.types.sensor.water_leak";
-    public static final String DEV_SENSOR_BUTTON = "devices.types.sensor.button";
-    public static final String DEV_SENSOR_GAS = "devices.types.sensor.gas";
-    public static final String DEV_SENSOR_SMOKE = "devices.types.sensor.smoke";
+    public static final String DEV_OPENABLE = "devices.types.openable";
+    public static final String DEV_CURTAIN = "devices.types.openable.curtain";
+    public static final String DEV_OTHER = "devices.types.other";
     public static final String DEV_PET_DRINKING_FOUNTAIN = "devices.types.pet_drinking_fountain";
     public static final String DEV_PET_FEEDER = "devices.types.pet_feeder";
-    public static final String DEV_OTHER = "devices.types.other";
+    public static final String DEV_PURIFIER = "devices.types.purifier";
+    public static final String DEV_SENSOR = "devices.types.sensor";
+    public static final String DEV_SENSOR_BUTTON = "devices.types.sensor.button";
+    public static final String DEV_SENSOR_CLIMATE = "devices.types.sensor.climate";
+    public static final String DEV_SENSOR_GAS = "devices.types.sensor.gas";
+    public static final String DEV_SENSOR_ILLUMINATION = "devices.types.sensor.illumination";
+    public static final String DEV_SENSOR_MOTION = "devices.types.sensor.motion";
+    public static final String DEV_SENSOR_OPEN = "devices.types.sensor.open";
+    public static final String DEV_SENSOR_SMOKE = "devices.types.sensor.smoke";
+    public static final String DEV_SENSOR_VIBRATION = "devices.types.sensor.vibration";
+    public static final String DEV_SENSOR_WATER_LEAK = "devices.types.sensor.water_leak";
+    public static final String DEV_SMART_METER = "devices.types.smart_meter";
+    public static final String DEV_COLD_WATER = "devices.types.smart_meter.cold_water";
+    public static final String DEV_ELECTRICITY = "devices.types.smart_meter.electricity";
+    public static final String DEV_GAS = "devices.types.smart_meter.gas";
+    public static final String DEV_HEAT = "devices.types.smart_meter.heat";
+    public static final String DEV_HOT_WATER = "devices.types.smart_meter.hot_water";
+    public static final String DEV_SOCKET = "devices.types.socket";
+    public static final String DEV_SWITCH = "devices.types.switch";
+    public static final String DEV_THERMOSTAT = "devices.types.thermostat";
+    public static final String DEV_THERMOSTAT_AC = "devices.types.thermostat.ac";
+    public static final String DEV_VACUUM_CLEANER = "devices.types.vacuum_cleaner";
+    public static final String DEV_WASHING_MACHINE = "devices.types.washing_machine";
+
+    // ------------------------------------
     public static final String FLOAT_AMPERAGE = "amperage";
     public static final String FLOAT_BATTERY_LEVEL = "battery_level";
     public static final String FLOAT_CO2 = "co2_level";
+    public static final String FLOAT_ELECTRICITY_METER = "electricity_meter";
     public static final String FLOAT_FOOD_LEVEL = "food_level";
+    public static final String FLOAT_GAS_METER = "gas_meter";
+    public static final String FLOAT_HEAT_METER = "heat_meter";
     public static final String FLOAT_HUMIDITY = "humidity";
     public static final String FLOAT_ILLUMINATION = "illumination";
     public static final String FLOAT_PM1_DENSITY = "pm1_density";
@@ -82,6 +104,8 @@ public class YandexDevice {
     public static final String FLOAT_TVOC = "tvoc";
     public static final String FLOAT_VOLTAGE = "voltage";
     public static final String FLOAT_WATER_LEVEL = "water_level";
+    public static final String FLOAT_WATER_METER = "water_meter";
+    // ----------------------------------------------
     public static final String CAP_ON_OFF = "devices.capabilities.on_off";
     public static final String CAP_COLOR_SETTINGS = "devices.capabilities.color_setting";
     public static final String CAP_RANGE = "devices.capabilities.range";
@@ -174,7 +198,9 @@ public class YandexDevice {
             DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_THERMOSTAT, DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX,
             DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER, DEV_VACUUM_CLEANER, DEV_WASHING_MACHINE, DEV_DISHWASHER,
             DEV_IRON, DEV_SENSOR_VIBRATION, DEV_SENSOR_ILLUMINATION, DEV_SENSOR_CLIMATE, DEV_SENSOR_WATER_LEAK,
-            DEV_SENSOR_BUTTON, DEV_SENSOR_GAS, DEV_SENSOR_SMOKE, DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_OTHER);
+            DEV_SENSOR_BUTTON, DEV_SENSOR_GAS, DEV_SENSOR_SMOKE, DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_OTHER,
+            DEV_CAMERA, DEV_COOKING, DEV_COFFEE_MAKER, DEV_KETTLE, DEV_MULTICOOKER, DEV_SENSOR_MOTION, DEV_SMART_METER,
+            DEV_COLD_WATER, DEV_ELECTRICITY, DEV_GAS, DEV_HEAT, DEV_HOT_WATER, DEV_THERMOSTAT_AC);
     public static final Collection<String> RANGE_LIST = List.of(RANGE_BRIGHTNESS, RANGE_CHANNEL, RANGE_HUMIDITY,
             RANGE_OPEN, RANGE_TEMPERATURE, RANGE_VOLUME);
     public static final Collection<String> OPER_LIST = List.of(OPER_AUTO, OPER_MAX, OPER_MIN, OPER_NORMAL, OPER_TURBO,
@@ -202,7 +228,8 @@ public class YandexDevice {
             TOGGLE_IONIZATION, TOGGLE_OSCILLATION, TOGGLE_CONTROLS_LOCKED, TOGGLE_KEEP_WARM);
     public static final Collection<String> FLOAT_LIST = List.of(FLOAT_AMPERAGE, FLOAT_BATTERY_LEVEL, FLOAT_CO2,
             FLOAT_FOOD_LEVEL, FLOAT_HUMIDITY, FLOAT_ILLUMINATION, FLOAT_PM1_DENSITY, FLOAT_PM25_DENSITY,
-            FLOAT_PM10_DENSITY, FLOAT_POWER, FLOAT_PRESSURE, FLOAT_TEMP, FLOAT_TVOC, FLOAT_VOLTAGE, FLOAT_WATER_LEVEL);
+            FLOAT_PM10_DENSITY, FLOAT_POWER, FLOAT_PRESSURE, FLOAT_TEMP, FLOAT_TVOC, FLOAT_VOLTAGE, FLOAT_WATER_LEVEL,
+            FLOAT_ELECTRICITY_METER, FLOAT_WATER_METER, FLOAT_HEAT_METER, FLOAT_GAS_METER);
     public static final Collection<String> EVENT_LIST = List.of(EVENT_OPEN, EVENT_SMOKE, EVENT_BUTTON, EVENT_GAS,
             EVENT_MOTION, EVENT_BATTERY_LEVEL, EVENT_VIBRATION, EVENT_WATER_LEVEL, EVENT_WATER_LEAK);
     public static final Collection<String> SCENES_LIST = List.of(SCENE_ALARM, SCENE_ALICE, SCENE_CANDLE, SCENE_DINNER,

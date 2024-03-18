@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2022 Contributors to the openHAB project
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,14 +12,7 @@
  */
 package org.openhab.io.yandexalice.internal;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -561,6 +554,15 @@ public class YandexService implements EventSubscriber {
                                         case YandexDevice.FLOAT_VOLTAGE:
                                             ref.unit = YandexDevice.UNIT_VOLT;
                                             break;
+                                        case YandexDevice.FLOAT_ELECTRICITY_METER:
+                                            ref.unit = YandexDevice.UNIT_KILOWATT_HOUR;
+                                            break;
+                                        case YandexDevice.FLOAT_GAS_METER, YandexDevice.FLOAT_WATER_METER:
+                                            ref.unit = YandexDevice.UNIT_CUBIC_METER;
+                                            break;
+                                        case YandexDevice.FLOAT_HEAT_METER:
+                                            ref.unit = YandexDevice.UNIT_GIGACALORIE;
+                                            break;
 
                                     }
                                 }
@@ -767,6 +769,15 @@ public class YandexService implements EventSubscriber {
                                                         break;
                                                     case YandexDevice.FLOAT_VOLTAGE:
                                                         ref.unit = YandexDevice.UNIT_VOLT;
+                                                        break;
+                                                    case YandexDevice.FLOAT_ELECTRICITY_METER:
+                                                        ref.unit = YandexDevice.UNIT_KILOWATT_HOUR;
+                                                        break;
+                                                    case YandexDevice.FLOAT_GAS_METER, YandexDevice.FLOAT_WATER_METER:
+                                                        ref.unit = YandexDevice.UNIT_CUBIC_METER;
+                                                        break;
+                                                    case YandexDevice.FLOAT_HEAT_METER:
+                                                        ref.unit = YandexDevice.UNIT_GIGACALORIE;
                                                         break;
 
                                                 }
