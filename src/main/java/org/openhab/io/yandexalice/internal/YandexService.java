@@ -12,9 +12,12 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import static org.openhab.io.yandexalice.internal.YandexDevice.DEV_LIST;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 
@@ -508,8 +512,14 @@ public class YandexService implements EventSubscriber {
                         }
                     } else if (item instanceof NumberItem) {
                         // todo number item list
-                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexDevice.DEV_SENSOR, item.getState());
+                        YandexDevice yDev;
+                        if (item.hasTag("smart_meter")) {
+                            yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                    YandexDevice.DEV_SMART_METER, item.getState());
+                        } else {
+                            yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                    YandexDevice.DEV_SENSOR, item.getState());
+                        }
                         var ref = new Object() {
                             String instance = "";
                             String unit = "";
@@ -620,7 +630,7 @@ public class YandexService implements EventSubscriber {
                         var dev = new Object() {
                             String devType = "";
                         };
-                        YandexDevice.DEV_LIST.forEach((v) -> {
+                        DEV_LIST.forEach((v) -> {
                             for (String tag : groupItem.getTags()) {
                                 if (v.endsWith(tag.toLowerCase())) {
                                     dev.devType = v;
