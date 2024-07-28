@@ -287,6 +287,12 @@ public class YandexAliceJson {
                 props.put(new JSONObject().put("type", prop.getPropName()).put("state",
                         new JSONObject().put("instance", prop.getInstance()).put("value", st)));
             }
+        } else if (state instanceof StringType) {
+            if (prop.getInstance().equals(YandexDevice.EVENT_BUTTON)) {
+                String st = state.toString();
+                props.put(new JSONObject().put("type", prop.getPropName()).put("state",
+                        new JSONObject().put("instance", prop.getInstance()).put("value", st)));
+            }
         }
         returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("properties", props);
     }
