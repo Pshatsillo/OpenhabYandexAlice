@@ -62,6 +62,11 @@ public class YandexAliceProperties {
                     events = new JSONArray().put(new JSONObject().put("value", "low"))
                             .put(new JSONObject().put("value", "normal"));
                     break;
+                case YandexDevice.EVENT_BUTTON:
+                    events = new JSONArray().put(new JSONObject().put("value", "click"))
+                            .put(new JSONObject().put("value", "double_click"))
+                            .put(new JSONObject().put("value", "long_press"));
+                    break;
             }
         }
     }
