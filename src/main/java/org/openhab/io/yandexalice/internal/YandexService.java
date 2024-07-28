@@ -920,6 +920,15 @@ public class YandexService implements EventSubscriber {
                                                                     new StateOption("fall", "fall"),
                                                                     new StateOption("vibration", "vibration")))
                                                             .build().toStateDescription());
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.EVENT_BUTTON)) {
+                                            yDev.addProperties(grpItem.getName(), YandexDevice.PROP_EVENT,
+                                                    YandexDevice.EVENT_BUTTON, "");
+                                            ((StringItem) grpItem).setStateDescriptionService(
+                                                    (text, locale) -> StateDescriptionFragmentBuilder.create()
+                                                            .withOptions(List.of(new StateOption("click", "click"),
+                                                                    new StateOption("double_click", "double_click"),
+                                                                    new StateOption("long_press", "long_press")))
+                                                            .build().toStateDescription());
                                         }
                                         if (setDefaultValues) {
                                             if (tag.toLowerCase().startsWith("-")) {
