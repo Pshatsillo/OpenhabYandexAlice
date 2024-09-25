@@ -12,8 +12,7 @@
  */
 package org.openhab.io.yandexalice.internal;
 
-import static org.openhab.io.yandexalice.internal.YandexDevice.DEV_LIST;
-
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +32,10 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.config.core.ConfigurableService;
 import org.openhab.core.events.Event;
@@ -113,6 +116,8 @@ public class YandexService implements EventSubscriber {
     private static String uuid = "";
     private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
     private @Nullable ScheduledFuture<?> refreshPollingJob;
+    public static List<String> devicesList = new ArrayList<>();
+    private int devRefreshTime = 0;
     protected final ScheduledExecutorService scheduler = ThreadPoolManager
             .getScheduledPool(ThreadPoolManager.THREAD_POOL_NAME_COMMON);
 
@@ -134,6 +139,7 @@ public class YandexService implements EventSubscriber {
         YandexService.things = things;
         YandexService.link = link;
         getItemsList();
+        getDevicesList();
         uuid = InstanceUUID.get();
 
         ScheduledFuture<?> refreshPollingJob = this.refreshPollingJob;
@@ -142,8 +148,29 @@ public class YandexService implements EventSubscriber {
         }
     }
 
+    private void getDevicesList() {
+        try {
+            Document doc = Jsoup.connect("https://yandex.ru/dev/dialogs/smart-home/doc/ru/concepts/device-types")
+                    .userAgent("Mozilla").get();
+            Elements attrs = doc.getElementsByAttribute("yfm_patched");
+            for (Element dev : attrs) {
+                if (!devicesList.contains(dev.attr("alt"))) {
+                    devicesList.add(dev.attr("alt"));
+                }
+            }
+            logger.debug("Jsoup: done");
+        } catch (IOException ignored) {
+        }
+    }
+
     private void refresh() {
         logger.debug("refreshing...");
+        if (devRefreshTime == 60) {
+            getDevicesList();
+            devRefreshTime = 0;
+        } else {
+            devRefreshTime++;
+        }
         YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L, uuid);
         if (itemRegistry != null) {
             Collection<Item> itemsList = Objects.requireNonNull(itemRegistry).getItems();
@@ -628,7 +655,7 @@ public class YandexService implements EventSubscriber {
                         var dev = new Object() {
                             String devType = "";
                         };
-                        DEV_LIST.forEach((v) -> {
+                        devicesList.forEach((v) -> {
                             for (String tag : groupItem.getTags()) {
                                 if (v.endsWith(tag.toLowerCase())) {
                                     dev.devType = v;

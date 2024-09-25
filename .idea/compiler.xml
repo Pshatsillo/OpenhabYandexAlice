@@ -11,14 +11,11 @@
         <module name="org.openhab.binding.yandexalice" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="org.openhab.io.yandexalice" target="11" />
-    </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="org.openhab.binding.yandexalice" options="-annotationpath CLASSPATH -classpath G:\Openhab\openhab-addons\bundles\org.openhab.binding.yandexalice\target/dependency &quot;-err:+nullAnnot(org.eclipse.jdt.annotation.Nullable|org.eclipse.jdt.annotation.NonNull|org.eclipse.jdt.annotation.NonNullByDefault),+inheritNullAnnot,+nullAnnotConflict,-nullUncheckedConversion&quot; -warn:+null,+inheritNullAnnot,-nullUncheckedConversion,+nullAnnotRedundant,+nullDereference -nowarn:[G:\Openhab\openhab-addons\bundles\org.openhab.binding.yandexalice\target/generated-sources]" />
-      <module name="org.openhab.io.yandexalice" options="-annotationpath CLASSPATH -classpath E:\Common\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/dependency &quot;-err:+nullAnnot(org.eclipse.jdt.annotation.Nullable|org.eclipse.jdt.annotation.NonNull|org.eclipse.jdt.annotation.NonNullByDefault),+inheritNullAnnot,+nullAnnotConflict,-nullUncheckedConversion&quot; -warn:+null,+inheritNullAnnot,-nullUncheckedConversion,+nullAnnotRedundant,+nullDereference -nowarn:[E:\Common\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/generated-sources]" />
+      <module name="org.openhab.io.yandexalice" options="-annotationpath CLASSPATH -classpath G:\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/dependency &quot;-err:+nullAnnot(org.eclipse.jdt.annotation.Nullable|org.eclipse.jdt.annotation.NonNull|org.eclipse.jdt.annotation.NonNullByDefault),+inheritNullAnnot,+nullAnnotConflict,-nullUncheckedConversion&quot; -warn:+null,+inheritNullAnnot,-nullUncheckedConversion,+nullAnnotRedundant,+nullDereference -nowarn:[G:\Openhab\openhab-addons\bundles\org.openhab.io.yandexalice\target/generated-sources]" />
     </option>
   </component>
 </project>
