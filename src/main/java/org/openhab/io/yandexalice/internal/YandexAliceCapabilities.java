@@ -39,6 +39,10 @@ public class YandexAliceCapabilities {
     private State state = null;
     JSONArray modes = new JSONArray();
     JSONArray scenesList = new JSONArray();
+    // private JSONObject temperatureK = new JSONObject();
+
+    private ColorSettingsTemperature temperatureK = new ColorSettingsTemperature();
+    private ColorSettingsModel colorSettingsModel = new ColorSettingsModel();
 
     public JSONArray getModes() {
         return modes;
@@ -121,6 +125,16 @@ public class YandexAliceCapabilities {
         });
     }
 
+    public void setTemperatureK(ColorSettingsTemperature temperatureK) {
+        this.temperatureK = temperatureK;
+        // temperatureK.setOhID(ohID);
+        // temperatureK.setTemp(true);
+    }
+
+    public ColorSettingsTemperature getTemperatureK() {
+        return temperatureK;
+    }
+
     public JSONArray getScenesList() {
         return scenesList;
     }
@@ -131,5 +145,75 @@ public class YandexAliceCapabilities {
 
     public void setScenesOhID(String scenesOhID) {
         this.scenesOhID = scenesOhID;
+    }
+
+    public void setColorModel(ColorSettingsModel colorSettingsModel) {
+        this.colorSettingsModel = colorSettingsModel;
+    }
+
+    public ColorSettingsModel getColorModel() {
+        return colorSettingsModel;
+    }
+
+    public static class ColorSettingsTemperature {
+        private String ohID = "";
+        private boolean isTemp;
+        @Nullable
+        private State state;
+
+        public String getOhID() {
+            return ohID;
+        }
+
+        public void setOhID(String ohID) {
+            this.ohID = ohID;
+        }
+
+        public boolean isTemp() {
+            return isTemp;
+        }
+
+        public void setTemp(boolean temp) {
+            isTemp = temp;
+        }
+
+        public @Nullable State getState() {
+            return state;
+        }
+
+        public void setState(State state) {
+            this.state = state;
+        }
+    }
+
+    public static class ColorSettingsModel {
+        private String ohID = "";
+        private boolean isModel;
+        @Nullable
+        private State state;
+
+        public String getOhID() {
+            return ohID;
+        }
+
+        public void setOhID(String ohID) {
+            this.ohID = ohID;
+        }
+
+        public boolean isModel() {
+            return isModel;
+        }
+
+        public void setModel(boolean isModel) {
+            this.isModel = isModel;
+        }
+
+        public @Nullable State getState() {
+            return state;
+        }
+
+        public void setState(State state) {
+            this.state = state;
+        }
     }
 }

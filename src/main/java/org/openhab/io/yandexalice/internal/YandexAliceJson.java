@@ -82,17 +82,20 @@ public class YandexAliceJson {
                                 .put("unit", cp.getUnit()))
                         .put("retrievable", true).put("reportable", true));
             } else if (cp.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS)) {
-                if (cp.getScenesList().isEmpty()) {
-                    caps.put(new JSONObject().put("type", cp.getCapabilityName())
-                            .put("parameters", new JSONObject().put("color_model", "hsv")).put("retrievable", true)
-                            .put("reportable", true));
-                } else {
-                    caps.put(new JSONObject().put("type", cp.getCapabilityName())
-                            .put("parameters",
-                                    new JSONObject().put("color_model", "hsv").put("color_scene",
-                                            new JSONObject().put("scenes", cp.getScenesList())))
-                            .put("retrievable", true).put("reportable", true));
+                JSONObject colSetObj = new JSONObject();
+                JSONObject params = new JSONObject();
+                colSetObj.put("type", cp.getCapabilityName());
+                if (cp.getColorModel().isModel()) {
+                    params.put("color_model", "hsv");
                 }
+                if (cp.getTemperatureK().isTemp()) {
+                    params.put("temperature_k", new JSONObject().put("min", 1500).put("max", 9000));
+                }
+                if (!cp.getScenesList().isEmpty()) {
+                    params.put("scenes", cp.getScenesList());
+                }
+                colSetObj.put("parameters", params).put("retrievable", true).put("reportable", true);
+                caps.put(colSetObj);
             } else if (cp.capabilityName.equals(YandexDevice.CAP_MODE)) {
                 caps.put(new JSONObject().put("type", cp.getCapabilityName())
                         .put("parameters",
@@ -190,11 +193,21 @@ public class YandexAliceJson {
                         .put("instance", capability.getInstance()).put("value", ((PercentType) state).intValue())));
             }
         } else if ((state instanceof DecimalType) || (state instanceof QuantityType)) {
-            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
-                    .put("instance", capability.getInstance()).put("value", ((Number) state).doubleValue())));
+            if (capability.getTemperatureK().isTemp()) {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
+                        .put("instance", "temperature_k").put("value", ((Number) state).doubleValue())));
+            } else {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state", new JSONObject()
+                        .put("instance", capability.getInstance()).put("value", ((Number) state).doubleValue())));
+            }
         } else if (state instanceof StringType) {
-            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
-                    new JSONObject().put("instance", capability.getInstance()).put("value", state.toString())));
+            if (capability.getCapabilityName().equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", "scene").put("value", state.toString())));
+            } else {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", capability.getInstance()).put("value", state.toString())));
+            }
         }
         returnRequest.getJSONObject("payload").getJSONArray("devices").getJSONObject(0).put("capabilities", caps);
     }
