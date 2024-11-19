@@ -92,7 +92,7 @@ public class YandexAliceJson {
                     params.put("temperature_k", new JSONObject().put("min", 1500).put("max", 9000));
                 }
                 if (!cp.getScenesList().isEmpty()) {
-                    params.put("scenes", cp.getScenesList());
+                    params.put("color_scene", new JSONObject().put("scenes", cp.getScenesList()));
                 }
                 colSetObj.put("parameters", params).put("retrievable", true).put("reportable", true);
                 caps.put(colSetObj);

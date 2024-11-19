@@ -332,10 +332,6 @@ public class YandexDevice {
                     .setScenesOhID(scenesOhID);
         } else {
             addCapabilities("", CAP_COLOR_SETTINGS);
-            capabilities.stream().filter(cap -> cap.capabilityName.equals(CAP_COLOR_SETTINGS)).findFirst().get()
-                    .setScenesList(scenesList);
-            capabilities.stream().filter(cap -> cap.capabilityName.equals(CAP_COLOR_SETTINGS)).findFirst().get()
-                    .setScenesOhID(scenesOhID);
         }
     }
 }

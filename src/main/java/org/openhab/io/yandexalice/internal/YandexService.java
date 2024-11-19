@@ -378,23 +378,25 @@ public class YandexService implements EventSubscriber {
                                                 }
                                             } else if (cap.getCapabilityName()
                                                     .equals(YandexDevice.CAP_COLOR_SETTINGS)) {
-                                                if (state instanceof StringType) {
-                                                    eventJson.addCapabilityState(cap, item.getState());
-                                                    changed = true;
-                                                } else if (state instanceof DecimalType) {
-                                                    State st = cap.getTemperatureK().getState();
-                                                    if (st != null) {
-                                                        if (!st.equals(item.getState())) {
-                                                            eventJson.addCapabilityState(cap, item.getState());
-                                                            cap.setState(item.getState());
-                                                            changed = true;
-                                                        } else {
-                                                            changed = false;
-                                                        }
-                                                    } else {
-                                                        cap.getTemperatureK().setState(item.getState());
+                                                if (!item.hasTag("noyandex") && !item.hasTag("noYandex")) {
+                                                    if (state instanceof StringType) {
                                                         eventJson.addCapabilityState(cap, item.getState());
                                                         changed = true;
+                                                    } else if (state instanceof DecimalType) {
+                                                        State st = cap.getTemperatureK().getState();
+                                                        if (st != null) {
+                                                            if (!st.equals(item.getState())) {
+                                                                eventJson.addCapabilityState(cap, item.getState());
+                                                                cap.setState(item.getState());
+                                                                changed = true;
+                                                            } else {
+                                                                changed = false;
+                                                            }
+                                                        } else {
+                                                            cap.getTemperatureK().setState(item.getState());
+                                                            eventJson.addCapabilityState(cap, item.getState());
+                                                            changed = true;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -503,6 +505,17 @@ public class YandexService implements EventSubscriber {
                                 for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
                                     if (cap.getOhID().equals(itemGrp.getName())) {
                                         aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                    } else if (cap.getOhID().isEmpty()) {
+                                        if (!itemGrp.hasTag("noyandex") && !itemGrp.hasTag("noYandex")) {
+                                            if (itemGrp instanceof ColorItem) {
+                                                aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                            } else if (itemGrp instanceof NumberItem) {
+                                                aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                            } else if (itemGrp instanceof StringItem) {
+                                                logger.warn("item {} updating", itemGrp.getName());
+                                                aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                            }
+                                        }
                                     }
                                 }
                                 for (YandexAliceProperties prop : yDev.getProperties()) {
@@ -745,9 +758,20 @@ public class YandexService implements EventSubscriber {
                                             yDev.addCapabilities("", YandexDevice.CAP_COLOR_SETTINGS,
                                                     colorSettingsModel);
                                         } else {
-                                            caps.stream().findFirst().filter(
-                                                    cs -> cs.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS))
-                                                    .get().setColorModel(colorSettingsModel);
+                                            if (caps.stream().anyMatch(
+                                                    cs -> cs.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS))) {
+                                                caps.stream()
+                                                        .filter(cs -> cs.capabilityName
+                                                                .equals(YandexDevice.CAP_COLOR_SETTINGS))
+                                                        .findFirst().get().setColorModel(colorSettingsModel);
+                                            } else {
+                                                yDev.addCapabilities("", YandexDevice.CAP_COLOR_SETTINGS);
+                                                caps = yDev.getCapabilities();
+                                                caps.stream()
+                                                        .filter(cs -> cs.capabilityName
+                                                                .equals(YandexDevice.CAP_COLOR_SETTINGS))
+                                                        .findFirst().get().setColorModel(colorSettingsModel);
+                                            }
                                         }
                                     }
                                     // json.addCapabilities(yDev);
@@ -940,12 +964,12 @@ public class YandexService implements EventSubscriber {
                                                     });
 
                                                 }
-                                                if (scenes.isEmpty()) {
-                                                    yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
-                                                            grpItem.getName());
-                                                } else {
-                                                    yDev.setSceneColorCapabilities(scenes, grpItem.getName());
-                                                }
+                                            }
+                                            if (scenes.isEmpty()) {
+                                                yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
+                                                        grpItem.getName());
+                                            } else {
+                                                yDev.setSceneColorCapabilities(scenes, grpItem.getName());
                                             }
                                         }
                                         if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
@@ -1254,25 +1278,35 @@ public class YandexService implements EventSubscriber {
                                                 cp.getOhID(), StringType.valueOf(state.getString("value"))));
                                     }
                                 } else if (cp.getOhID().isEmpty()) {
-                                    if (memItem instanceof ColorItem) {
-                                        String instance = state.getString("instance");
-                                        if ("hsv".equals(instance)) {
-                                            JSONObject value = state.getJSONObject("value");
-                                            Objects.requireNonNull(eventPublisher)
-                                                    .post(ItemEventFactory.createCommandEvent(
-                                                            cp.getColorModel().getOhID(), HSBType.valueOf(value.get("h")
-                                                                    + "," + value.get("s") + "," + value.get("v"))));
-                                        }
-                                    } else if (memItem instanceof NumberItem) {
-                                        String instance = state.getString("instance");
-                                        if ("temperature_k".equals(instance)) {
-                                            Objects.requireNonNull(eventPublisher)
-                                                    .post(ItemEventFactory.createCommandEvent(
-                                                            cp.getTemperatureK().getOhID(), DecimalType
-                                                                    .valueOf(String.valueOf(state.getInt("value")))));
+                                    if (!memItem.hasTag("noyandex") && !memItem.hasTag("noYandex")) {
+                                        if (memItem instanceof ColorItem) {
+                                            String instance = state.getString("instance");
+                                            if ("hsv".equals(instance)) {
+                                                JSONObject value = state.getJSONObject("value");
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(
+                                                                cp.getColorModel().getOhID(),
+                                                                HSBType.valueOf(value.get("h") + "," + value.get("s")
+                                                                        + "," + value.get("v"))));
+                                            }
+                                        } else if (memItem instanceof NumberItem) {
+                                            String instance = state.getString("instance");
+                                            if ("temperature_k".equals(instance)) {
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(
+                                                                cp.getTemperatureK().getOhID(), DecimalType.valueOf(
+                                                                        String.valueOf(state.getInt("value")))));
+                                            }
+                                        } else if (memItem instanceof StringItem) {
+
+                                            String instance = state.getString("instance");
+                                            if ("scene".equals(instance)) {
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(cp.getScenesOhID(),
+                                                                StringType.valueOf(state.getString("value"))));
+                                            }
                                         }
                                     }
-
                                 }
                             });
 
