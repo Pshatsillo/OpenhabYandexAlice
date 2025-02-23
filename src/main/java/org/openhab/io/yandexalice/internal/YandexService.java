@@ -1249,8 +1249,19 @@ public class YandexService implements EventSubscriber {
                                                                     + value.get("v"))));
                                         }
                                     } else if (memItem instanceof DimmerItem) {
-                                        int value = state.getInt("value");
+                                        int value = 0;
+                                        boolean relative = state.getBoolean("relative");
+                                        var itemState = memItem.getState().toString();
                                         String instance = state.getString("instance");
+                                        if (relative) {
+                                            int setValue = state.getInt("value");
+                                            value = Integer.parseInt(itemState) + setValue;
+                                            if (value <= 0) {
+                                                value = 0;
+                                            }
+                                        } else {
+                                            value = state.getInt("value");
+                                        }
                                         if (instance.equals(cp.getInstance())) {
                                             Objects.requireNonNull(eventPublisher)
                                                     .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
