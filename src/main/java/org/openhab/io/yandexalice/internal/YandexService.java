@@ -894,7 +894,8 @@ public class YandexService implements EventSubscriber {
                                         });
                                         if ("temperature_k".equals(tag)) {
                                             List<YandexAliceCapabilities> caps = yDev.getCapabilities();
-                                            if (caps.isEmpty()) {
+                                            if (caps.isEmpty() || caps.stream().noneMatch(
+                                                    c -> c.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS))) {
                                                 yDev.addCapabilities("", YandexDevice.CAP_COLOR_SETTINGS);
                                             }
                                             caps.forEach(colset -> {
@@ -1250,7 +1251,10 @@ public class YandexService implements EventSubscriber {
                                         }
                                     } else if (memItem instanceof DimmerItem) {
                                         int value = 0;
-                                        boolean relative = state.getBoolean("relative");
+                                        boolean relative = false;
+                                        if (!state.isNull("relative")) {
+                                            relative = state.getBoolean("relative");
+                                        }
                                         var itemState = memItem.getState().toString();
                                         String instance = state.getString("instance");
                                         if (relative) {
