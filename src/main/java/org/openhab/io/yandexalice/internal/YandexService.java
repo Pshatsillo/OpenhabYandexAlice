@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -71,7 +71,6 @@ import org.openhab.core.library.types.HSBType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.PercentType;
-import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.Thing;
@@ -150,7 +149,10 @@ public class YandexService implements EventSubscriber {
         YandexService.link = link;
         getItemsList();
         getDevicesList();
-        uuid = InstanceUUID.get();
+        String uuid = InstanceUUID.get();
+        if (uuid != null) {
+            this.uuid = uuid;
+        }
 
         ScheduledFuture<?> refreshPollingJob = this.refreshPollingJob;
         if (refreshPollingJob == null || refreshPollingJob.isCancelled()) {
@@ -188,20 +190,20 @@ public class YandexService implements EventSubscriber {
         if (itemRegistry != null) {
             Collection<Item> itemsList = Objects.requireNonNull(itemRegistry).getItems();
             for (Item item : itemsList) {
-                if (!(item.getState() instanceof PercentType)) {
-                    if ((item.getState() instanceof DecimalType) || (item.getState() instanceof QuantityType)) {
-                        YandexDevice yaDev = yandexDevicesList.get(item.getName());
-                        if (yaDev != null) {
-                            eventJson.setDeviceID(yaDev);
-                            yaDev.getProperties().forEach(
-                                    (property) -> eventJson.addPropertyState(yaDev, property, item.getState()));
-                            yaDev.getCapabilities()
-                                    .forEach((cap) -> eventJson.addCapabilityState(yaDev, cap, item.getState()));
-                            updateCallback(eventJson.returnRequest.toString());
-                        }
-                    }
+                // if (!(item.getState() instanceof PercentType)) {
+                // if ((item.getState() instanceof DecimalType) || (item.getState() instanceof QuantityType)) {
+                YandexDevice yaDev = yandexDevicesList.get(item.getName());
+                if (yaDev != null) {
+                    eventJson.setDeviceID(yaDev);
+                    yaDev.getProperties()
+                            .forEach((property) -> eventJson.addPropertyState(yaDev, property, item.getState()));
+                    yaDev.getCapabilities().forEach((cap) -> eventJson.addCapabilityState(yaDev, cap, item.getState()));
+
                 }
+                // }
+                // }
             }
+            updateCallback(eventJson.returnRequest.toString());
         }
     }
 
