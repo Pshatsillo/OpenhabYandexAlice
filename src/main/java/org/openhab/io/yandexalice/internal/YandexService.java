@@ -151,7 +151,7 @@ public class YandexService implements EventSubscriber {
         getDevicesList();
         String uuid = InstanceUUID.get();
         if (uuid != null) {
-            this.uuid = uuid;
+            YandexService.uuid = uuid;
         }
 
         ScheduledFuture<?> refreshPollingJob = this.refreshPollingJob;
@@ -1257,7 +1257,7 @@ public class YandexService implements EventSubscriber {
                                         if (!state.isNull("relative")) {
                                             relative = state.getBoolean("relative");
                                         }
-                                        var itemState = memItem.getState().toString();
+                                        var itemState = memItem.getState().toString().split("\\.")[0];
                                         String instance = state.getString("instance");
                                         if (relative) {
                                             int setValue = state.getInt("value");
@@ -1336,37 +1336,6 @@ public class YandexService implements EventSubscriber {
             return "ERROR";
         }
     }
-    // private static JSONArray getCapabilitiesState(Item item, String status) {
-    // JSONObject itemJson = new JSONObject();
-    // JSONObject state = new JSONObject();
-    // JSONArray capabilitiesArray = new JSONArray();
-    // if (item instanceof ColorItem) {
-    // JSONObject capabilitiesObj = new JSONObject();
-    // capabilitiesObj.put("type", "devices.capabilities.color_setting");
-    // state.put("instance", "hsv");
-    // state.put("action_result", new JSONObject().put("status", status));
-    // capabilitiesObj.put("state", state);
-    // capabilitiesArray.put(capabilitiesObj);
-    // itemJson.put("capabilities", capabilitiesArray);
-    // } else if (item instanceof DimmerItem) {
-    // JSONObject capabilitiesObj = new JSONObject();
-    // capabilitiesObj.put("type", "devices.capabilities.range");
-    // state.put("instance", "brightness");
-    // state.put("action_result", new JSONObject().put("status", status));
-    // capabilitiesObj.put("state", state);
-    // capabilitiesArray.put(capabilitiesObj);
-    // itemJson.put("capabilities", capabilitiesArray);
-    // } else if (item instanceof SwitchItem) {
-    // JSONObject capabilitiesObj = new JSONObject();
-    // capabilitiesObj.put("type", "devices.capabilities.on_off");
-    // state.put("instance", "on");
-    // state.put("action_result", new JSONObject().put("status", status));
-    // capabilitiesObj.put("state", state);
-    // capabilitiesArray.put(capabilitiesObj);
-    // itemJson.put("capabilities", capabilitiesArray);
-    // }
-    // return capabilitiesArray;
-    // }
 
     @Deactivate
     protected void deactivate() {
@@ -1381,75 +1350,4 @@ public class YandexService implements EventSubscriber {
         }
         yandexDevicesList.clear();
     }
-
-    // private static JSONArray getCapabilitiesState(Item item) {
-    // JSONObject itemJson = new JSONObject();
-    // JSONObject state = new JSONObject();
-    // JSONArray capabilitiesArray = new JSONArray();
-    // if (item.getType().equals("Switch") && item.hasTag("Lightbulb")) {
-    // JSONObject capabilitiesObj = new JSONObject();
-    // capabilitiesObj.put("type", "devices.capabilities.on_off");
-    // state.put("instance", "on");
-    // if (item.getState().toString().equals("ON")) {
-    // state.put("value", true);
-    // } else {
-    // state.put("value", false);
-    // }
-    // capabilitiesObj.put("state", state);
-    // capabilitiesArray.put(capabilitiesObj);
-    // itemJson.put("capabilities", capabilitiesArray);
-    // } else if (item.getType().equals("Switch") && item.hasTag("RadiatorControl")) {
-    // JSONObject capabilitiesObj = new JSONObject();
-    // capabilitiesObj.put("type", "devices.capabilities.on_off");
-    // state.put("instance", "on");
-    // if (item.getState().toString().equals("ON")) {
-    // state.put("value", true);
-    // } else {
-    // state.put("value", false);
-    // }
-    // capabilitiesObj.put("state", state);
-    // capabilitiesArray.put(capabilitiesObj);
-    // itemJson.put("capabilities", capabilitiesArray);
-    // }
-    // return capabilitiesArray;
-    // }
-
-    // private void getInfoFromYandex() {
-    // if (!yandexId.isEmpty()) {
-    // yandexId.clear();
-    // }
-    // HttpURLConnection con;
-    // URL yandexURL = null;
-    // try {
-    // yandexURL = new URL("https://api.iot.yandex.net/v1.0/user/info");
-    // con = (HttpURLConnection) yandexURL.openConnection();
-    // con.setRequestMethod("GET");
-    // con.setRequestProperty("Authorization", "Bearer " + yandexToken);
-    // con.setRequestProperty("Content-Type", "application/json");
-    // BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-    // String inputLine;
-    // StringBuilder response = new StringBuilder();
-    // while ((inputLine = in.readLine()) != null) {
-    // response.append(inputLine);
-    // }
-    // in.close();
-    // String result = response.toString().trim();
-    // // logger.debug("input string from REST: {}", result);
-    // con.disconnect();
-    // JSONObject yandexResponse = new JSONObject(result);
-    // JSONArray devices = yandexResponse.getJSONArray("devices");
-    // for (Object dev : devices) {
-    // JSONObject device = (JSONObject) dev;
-    // String id = device.get("id").toString();
-    // String external_id = device.get("external_id").toString();
-    // Item itm = itemRegistry.get(external_id);
-    // if (itemRegistry.get(external_id) != null) {
-    // yandexId.put(external_id, id);
-    // }
-    // }
-    //
-    // } catch (Exception e) {
-    // logger.debug("getInfoFromYandex error {}", e.getLocalizedMessage());
-    // }
-    // }
 }

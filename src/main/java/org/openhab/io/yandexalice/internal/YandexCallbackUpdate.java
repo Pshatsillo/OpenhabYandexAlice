@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -46,7 +47,10 @@ public class YandexCallbackUpdate implements Runnable {
         HttpURLConnection con;
         URL yandexURL;
         try {
-            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state");
+            yandexURL = URI
+                    .create("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state")
+                    .toURL();
+            ;
             con = (HttpURLConnection) yandexURL.openConnection();
             con.setConnectTimeout(1000);
             con.setReadTimeout(2000);
