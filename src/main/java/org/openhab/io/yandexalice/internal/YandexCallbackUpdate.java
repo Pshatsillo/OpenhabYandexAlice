@@ -65,7 +65,7 @@ public class YandexCallbackUpdate implements Runnable {
 
             int code = con.getResponseCode();
             // Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}", con.getResponseMessage(), code);
+            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code, con.getContent().toString());
             // InputStream resp = con.getInputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
@@ -77,7 +77,7 @@ public class YandexCallbackUpdate implements Runnable {
             String result = response.toString().trim();
             logger.debug("input string from REST: {}", result);
         } catch (IOException e) {
-            logger.debug("ERROR {}", e.getMessage());
+            logger.error("ERROR {}", e.getMessage());
         }
     }
 }

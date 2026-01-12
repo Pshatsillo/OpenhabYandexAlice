@@ -41,6 +41,7 @@ public class YandexAliceDevicesConstants {
     public static final String DEV_TV = "devices.types.media_device.tv";
     public static final String DEV_TV_BOX = "devices.types.media_device.tv_box";
     public static final String DEV_OPENABLE = "devices.types.openable";
+    public static final String DEV_DOORLOCK = "devices.types.openable.door_lock";
     public static final String DEV_CURTAIN = "devices.types.openable.curtain";
     public static final String DEV_VALVE = "devices.types.openable.valve";
     public static final String DEV_OTHER = "devices.types.other";
@@ -70,11 +71,11 @@ public class YandexAliceDevicesConstants {
     public static final String DEV_VACUUM_CLEANER = "devices.types.vacuum_cleaner";
     public static final String DEV_WASHING_MACHINE = "devices.types.washing_machine";
     public static final Collection<String> DEV_LIST = List.of(DEV_SENSOR, DEV_SOCKET, DEV_SWITCH, DEV_LIGHT,
-            DEV_LIGHT_CEILING, DEV_LIGHT_STRIP, DEV_OPENABLE, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_VALVE, DEV_THERMOSTAT,
-            DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX, DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER, DEV_VACUUM_CLEANER,
-            DEV_WASHING_MACHINE, DEV_DISHWASHER, DEV_IRON, DEV_SENSOR_VIBRATION, DEV_SENSOR_ILLUMINATION,
-            DEV_SENSOR_CLIMATE, DEV_SENSOR_WATER_LEAK, DEV_SENSOR_BUTTON, DEV_SENSOR_GAS, DEV_SENSOR_SMOKE,
-            DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_OTHER, DEV_CAMERA, DEV_COOKING, DEV_COFFEE_MAKER, DEV_KETTLE,
-            DEV_MULTICOOKER, DEV_SENSOR_MOTION, DEV_SMART_METER, DEV_COLD_WATER, DEV_ELECTRICITY, DEV_GAS, DEV_HEAT,
-            DEV_HOT_WATER, DEV_THERMOSTAT_AC);
+            DEV_LIGHT_CEILING, DEV_LIGHT_STRIP, DEV_OPENABLE, DEV_DOORLOCK, DEV_SENSOR_OPEN, DEV_CURTAIN, DEV_VALVE,
+            DEV_THERMOSTAT, DEV_MEDIA_DEVICE, DEV_TV, DEV_TV_BOX, DEV_RECEIVER, DEV_HUMIDIFIER, DEV_PURIFIER,
+            DEV_VACUUM_CLEANER, DEV_WASHING_MACHINE, DEV_DISHWASHER, DEV_IRON, DEV_SENSOR_VIBRATION,
+            DEV_SENSOR_ILLUMINATION, DEV_SENSOR_CLIMATE, DEV_SENSOR_WATER_LEAK, DEV_SENSOR_BUTTON, DEV_SENSOR_GAS,
+            DEV_SENSOR_SMOKE, DEV_PET_DRINKING_FOUNTAIN, DEV_PET_FEEDER, DEV_OTHER, DEV_CAMERA, DEV_COOKING,
+            DEV_COFFEE_MAKER, DEV_KETTLE, DEV_MULTICOOKER, DEV_SENSOR_MOTION, DEV_SMART_METER, DEV_COLD_WATER,
+            DEV_ELECTRICITY, DEV_GAS, DEV_HEAT, DEV_HOT_WATER, DEV_THERMOSTAT_AC);
 }
