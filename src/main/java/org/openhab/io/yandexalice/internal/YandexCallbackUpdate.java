@@ -65,7 +65,8 @@ public class YandexCallbackUpdate implements Runnable {
 
             int code = con.getResponseCode();
             // Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code, con.getContent().toString());
+            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code,
+                    con.getContent().toString());
             // InputStream resp = con.getInputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
