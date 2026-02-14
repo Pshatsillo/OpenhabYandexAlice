@@ -290,6 +290,7 @@ public class YandexDevice {
         cp.addCapability(capability);
         cp.setOhID(ohID);
         cp.setColorModel(colorSettingsModel);
+        capabilities.add(cp);
     }
 
     public List<YandexAliceCapabilities> getCapabilities() {

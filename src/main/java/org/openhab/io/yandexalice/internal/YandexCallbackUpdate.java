@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
@@ -46,7 +47,10 @@ public class YandexCallbackUpdate implements Runnable {
         HttpURLConnection con;
         URL yandexURL;
         try {
-            yandexURL = new URL("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state");
+            yandexURL = URI
+                    .create("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state")
+                    .toURL();
+            ;
             con = (HttpURLConnection) yandexURL.openConnection();
             con.setConnectTimeout(1000);
             con.setReadTimeout(2000);
@@ -61,7 +65,7 @@ public class YandexCallbackUpdate implements Runnable {
 
             int code = con.getResponseCode();
             // Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}", con.getResponseMessage(), code);
+            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code, con.getContent().toString());
             // InputStream resp = con.getInputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
@@ -73,7 +77,7 @@ public class YandexCallbackUpdate implements Runnable {
             String result = response.toString().trim();
             logger.debug("input string from REST: {}", result);
         } catch (IOException e) {
-            logger.debug("ERROR {}", e.getMessage());
+            logger.error("ERROR {}", e.getMessage());
         }
     }
 }
