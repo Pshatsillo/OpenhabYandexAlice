@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010-2023 Contributors to the openHAB project
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,17 @@
  */
 package org.openhab.io.yandexalice.internal;
 
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_CURTAIN;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_LIGHT;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_LIST;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_OPENABLE;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_SENSOR;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_SENSOR_OPEN;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_SMART_METER;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_SOCKET;
+import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.DEV_SWITCH;
+
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,6 +42,10 @@ import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.openhab.core.common.ThreadPoolManager;
 import org.openhab.core.config.core.ConfigurableService;
 import org.openhab.core.events.Event;
@@ -111,6 +126,8 @@ public class YandexService implements EventSubscriber {
     private static String uuid = "";
     private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
     private @Nullable ScheduledFuture<?> refreshPollingJob;
+    public static List<String> devicesList = new ArrayList<>();
+    private int devRefreshTime = 0;
     protected final ScheduledExecutorService scheduler = ThreadPoolManager
             .getScheduledPool(ThreadPoolManager.THREAD_POOL_NAME_COMMON);
 
@@ -132,6 +149,7 @@ public class YandexService implements EventSubscriber {
         YandexService.things = things;
         YandexService.link = link;
         getItemsList();
+        getDevicesList();
         uuid = InstanceUUID.get();
 
         ScheduledFuture<?> refreshPollingJob = this.refreshPollingJob;
@@ -140,8 +158,32 @@ public class YandexService implements EventSubscriber {
         }
     }
 
+    private static void getDevicesList() {
+        try {
+            Document doc = Jsoup.connect("https://yandex.ru/dev/dialogs/smart-home/doc/ru/concepts/device-types")
+                    .userAgent(
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 YaBrowser/24.10.0.0 Safari/537.36")
+                    .header("Cookie", "yandexuid=8427797031695969902").get();
+            Elements attrs = doc.getElementsByAttribute("yfm_patched");
+            for (Element dev : attrs) {
+                if (!devicesList.contains(dev.attr("alt"))) {
+                    devicesList.add(dev.attr("alt"));
+                }
+            }
+            Logger logger = LoggerFactory.getLogger(YandexService.class);
+            logger.debug("Jsoup: done");
+        } catch (IOException ignored) {
+        }
+    }
+
     private void refresh() {
         logger.debug("refreshing...");
+        if (devRefreshTime == 60) {
+            getDevicesList();
+            devRefreshTime = 0;
+        } else {
+            devRefreshTime++;
+        }
         YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L, uuid);
         if (itemRegistry != null) {
             Collection<Item> itemsList = Objects.requireNonNull(itemRegistry).getItems();
@@ -334,6 +376,29 @@ public class YandexService implements EventSubscriber {
                                                     eventJson.addCapabilityState(cap, item.getState());
                                                     changed = true;
                                                 }
+                                            } else if (cap.getCapabilityName()
+                                                    .equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+                                                if (!item.hasTag("noyandex") && !item.hasTag("noYandex")) {
+                                                    if (state instanceof StringType) {
+                                                        eventJson.addCapabilityState(cap, item.getState());
+                                                        changed = true;
+                                                    } else if (state instanceof DecimalType) {
+                                                        State st = cap.getTemperatureK().getState();
+                                                        if (st != null) {
+                                                            if (!st.equals(item.getState())) {
+                                                                eventJson.addCapabilityState(cap, item.getState());
+                                                                cap.setState(item.getState());
+                                                                changed = true;
+                                                            } else {
+                                                                changed = false;
+                                                            }
+                                                        } else {
+                                                            cap.getTemperatureK().setState(item.getState());
+                                                            eventJson.addCapabilityState(cap, item.getState());
+                                                            changed = true;
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -363,7 +428,6 @@ public class YandexService implements EventSubscriber {
     private void updateCallback(String json) {
         YandexCallbackUpdate updateAliceItem = new YandexCallbackUpdate(json);
         Thread updateAliceItemTread = new Thread(updateAliceItem);
-        updateAliceItemTread.setName("test");
         updateAliceItemTread.start();
     }
 
@@ -441,6 +505,17 @@ public class YandexService implements EventSubscriber {
                                 for (YandexAliceCapabilities cap : yDev.getCapabilities()) {
                                     if (cap.getOhID().equals(itemGrp.getName())) {
                                         aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                    } else if (cap.getOhID().isEmpty()) {
+                                        if (!itemGrp.hasTag("noyandex") && !itemGrp.hasTag("noYandex")) {
+                                            if (itemGrp instanceof ColorItem) {
+                                                aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                            } else if (itemGrp instanceof NumberItem) {
+                                                aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                            } else if (itemGrp instanceof StringItem) {
+                                                logger.warn("item {} updating", itemGrp.getName());
+                                                aliceJson.addCapabilityState(cap, itemGrp.getState());
+                                            }
+                                        }
                                     }
                                 }
                                 for (YandexAliceProperties prop : yDev.getProperties()) {
@@ -471,7 +546,7 @@ public class YandexService implements EventSubscriber {
                 if (item.hasTag("Yandex")) {
                     if (item instanceof ColorItem) {
                         YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexDevice.DEV_LIGHT, item.getState());
+                                DEV_LIGHT, item.getState());
                         yDev.addCapabilities(item.getName(), YandexDevice.CAP_COLOR_SETTINGS);
                         json.createDevice(yDev);
                         json.addCapabilities(yDev);
@@ -479,7 +554,7 @@ public class YandexService implements EventSubscriber {
                     } else if (item instanceof DimmerItem) {
                         logger.debug("this is Dimmer Item");
                         YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexDevice.DEV_LIGHT, item.getState());
+                                DEV_LIGHT, item.getState());
                         yDev.addCapabilities(item.getName(), YandexDevice.CAP_RANGE);
                         json.createDevice(yDev);
                         json.addCapabilities(yDev);
@@ -487,21 +562,21 @@ public class YandexService implements EventSubscriber {
                     } else if (item instanceof SwitchItem) {
                         if (item.hasTag("Lightbulb")) {
                             YandexDevice yDev = new YandexDevice(item.getName(),
-                                    Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_LIGHT, item.getState());
+                                    Objects.requireNonNull(item.getLabel()), DEV_LIGHT, item.getState());
                             yDev.addCapabilities(item.getName(), YandexDevice.CAP_ON_OFF);
                             json.createDevice(yDev);
                             json.addCapabilities(yDev);
                             yandexDevicesList.put(item.getName(), yDev);
                         } else if (item.hasTag("PowerOutlet")) {
                             YandexDevice yDev = new YandexDevice(item.getName(),
-                                    Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_SOCKET, item.getState());
+                                    Objects.requireNonNull(item.getLabel()), DEV_SOCKET, item.getState());
                             yDev.addCapabilities(item.getName(), YandexDevice.CAP_ON_OFF);
                             json.createDevice(yDev);
                             json.addCapabilities(yDev);
                             yandexDevicesList.put(item.getName(), yDev);
                         } else {
                             YandexDevice yDev = new YandexDevice(item.getName(),
-                                    Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_SWITCH, item.getState());
+                                    Objects.requireNonNull(item.getLabel()), DEV_SWITCH, item.getState());
                             yDev.addCapabilities(item.getName(), YandexDevice.CAP_ON_OFF);
                             json.createDevice(yDev);
                             json.addCapabilities(yDev);
@@ -509,8 +584,14 @@ public class YandexService implements EventSubscriber {
                         }
                     } else if (item instanceof NumberItem) {
                         // todo number item list
-                        YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexDevice.DEV_SENSOR, item.getState());
+                        YandexDevice yDev;
+                        if (item.hasTag("smart_meter")) {
+                            yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
+                                    DEV_SMART_METER, item.getState());
+                        } else {
+                            yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()), DEV_SENSOR,
+                                    item.getState());
+                        }
                         var ref = new Object() {
                             String instance = "";
                             String unit = "";
@@ -555,6 +636,15 @@ public class YandexService implements EventSubscriber {
                                         case YandexDevice.FLOAT_VOLTAGE:
                                             ref.unit = YandexDevice.UNIT_VOLT;
                                             break;
+                                        case YandexDevice.FLOAT_ELECTRICITY_METER:
+                                            ref.unit = YandexDevice.UNIT_KILOWATT_HOUR;
+                                            break;
+                                        case YandexDevice.FLOAT_GAS_METER, YandexDevice.FLOAT_WATER_METER:
+                                            ref.unit = YandexDevice.UNIT_CUBIC_METER;
+                                            break;
+                                        case YandexDevice.FLOAT_HEAT_METER:
+                                            ref.unit = YandexDevice.UNIT_GIGACALORIE;
+                                            break;
 
                                     }
                                 }
@@ -578,16 +668,14 @@ public class YandexService implements EventSubscriber {
                                 || (item.hasTag("CellarDoor")) || (item.hasTag("SideDoor"))
                                 || (item.hasTag("BackDoor"))) {
                             YandexDevice yDev = new YandexDevice(item.getName(),
-                                    Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_SENSOR_OPEN,
-                                    item.getState());
+                                    Objects.requireNonNull(item.getLabel()), DEV_SENSOR_OPEN, item.getState());
                             json.createDevice(yDev);
                             yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.EVENT_OPEN);
                             json.addProperties(yDev);
                             yandexDevicesList.put(item.getName(), yDev);
                         } else if ((item.hasTag("Blinds")) || (item.hasTag("Window"))) {
                             YandexDevice yDev = new YandexDevice(item.getName(),
-                                    Objects.requireNonNull(item.getLabel()), YandexDevice.DEV_OPENABLE,
-                                    item.getState());
+                                    Objects.requireNonNull(item.getLabel()), DEV_OPENABLE, item.getState());
                             json.createDevice(yDev);
                             yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.EVENT_OPEN);
                             json.addProperties(yDev);
@@ -596,7 +684,7 @@ public class YandexService implements EventSubscriber {
                     } else if (item instanceof RollershutterItem) {
                         logger.debug("RollerShutter");
                         YandexDevice yDev = new YandexDevice(item.getName(), Objects.requireNonNull(item.getLabel()),
-                                YandexDevice.DEV_CURTAIN, item.getState());
+                                DEV_CURTAIN, item.getState());
                         json.createDevice(yDev);
                         yDev.addProperties(YandexDevice.PROP_EVENT, YandexDevice.EVENT_OPEN);
                         yDev.addCapabilities(item.getName(), YandexDevice.CAP_RANGE, YandexDevice.EVENT_OPEN,
@@ -612,7 +700,11 @@ public class YandexService implements EventSubscriber {
                         var dev = new Object() {
                             String devType = "";
                         };
-                        YandexDevice.DEV_LIST.forEach((v) -> {
+                        // if (devicesList.isEmpty()) {
+                        // logger.warn("Cannot get list of devices");
+                        // getDevicesList();
+                        // }
+                        DEV_LIST.forEach((v) -> {
                             for (String tag : groupItem.getTags()) {
                                 if (v.endsWith(tag.toLowerCase())) {
                                     dev.devType = v;
@@ -656,8 +748,33 @@ public class YandexService implements EventSubscriber {
                                         yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_ON_OFF);
                                     }
                                 } else if (grpItem instanceof ColorItem) {
-                                    yDev.addCapabilities(grpItem.getName(), YandexDevice.CAP_COLOR_SETTINGS);
-                                    json.addCapabilities(yDev);
+                                    Set<String> tags = grpItem.getTags();
+                                    if (tags.stream().anyMatch(tag -> tag.equals("color_model"))) {
+                                        YandexAliceCapabilities.ColorSettingsModel colorSettingsModel = new YandexAliceCapabilities.ColorSettingsModel();
+                                        colorSettingsModel.setOhID(grpItem.getName());
+                                        colorSettingsModel.setModel(true);
+                                        List<YandexAliceCapabilities> caps = yDev.getCapabilities();
+                                        if (caps.isEmpty()) {
+                                            yDev.addCapabilities("", YandexDevice.CAP_COLOR_SETTINGS,
+                                                    colorSettingsModel);
+                                        } else {
+                                            if (caps.stream().anyMatch(
+                                                    cs -> cs.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS))) {
+                                                caps.stream()
+                                                        .filter(cs -> cs.capabilityName
+                                                                .equals(YandexDevice.CAP_COLOR_SETTINGS))
+                                                        .findFirst().get().setColorModel(colorSettingsModel);
+                                            } else {
+                                                yDev.addCapabilities("", YandexDevice.CAP_COLOR_SETTINGS);
+                                                caps = yDev.getCapabilities();
+                                                caps.stream()
+                                                        .filter(cs -> cs.capabilityName
+                                                                .equals(YandexDevice.CAP_COLOR_SETTINGS))
+                                                        .findFirst().get().setColorModel(colorSettingsModel);
+                                            }
+                                        }
+                                    }
+                                    // json.addCapabilities(yDev);
                                 } else if ((grpItem instanceof NumberItem) || (grpItem instanceof DimmerItem)) {
                                     logger.debug("this is GROUP Number ");
                                     Set<String> tags = grpItem.getTags();
@@ -762,14 +879,42 @@ public class YandexService implements EventSubscriber {
                                                     case YandexDevice.FLOAT_VOLTAGE:
                                                         ref.unit = YandexDevice.UNIT_VOLT;
                                                         break;
+                                                    case YandexDevice.FLOAT_ELECTRICITY_METER:
+                                                        ref.unit = YandexDevice.UNIT_KILOWATT_HOUR;
+                                                        break;
+                                                    case YandexDevice.FLOAT_GAS_METER, YandexDevice.FLOAT_WATER_METER:
+                                                        ref.unit = YandexDevice.UNIT_CUBIC_METER;
+                                                        break;
+                                                    case YandexDevice.FLOAT_HEAT_METER:
+                                                        ref.unit = YandexDevice.UNIT_GIGACALORIE;
+                                                        break;
 
                                                 }
                                             }
                                         });
+                                        if ("temperature_k".equals(tag)) {
+                                            List<YandexAliceCapabilities> caps = yDev.getCapabilities();
+                                            if (caps.isEmpty() || caps.stream().noneMatch(
+                                                    c -> c.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS))) {
+                                                yDev.addCapabilities("", YandexDevice.CAP_COLOR_SETTINGS);
+                                            }
+                                            caps.forEach(colset -> {
+                                                String capname = colset.getCapabilityName();
+                                                if (YandexDevice.CAP_COLOR_SETTINGS.equals(capname)) {
+                                                    YandexAliceCapabilities.ColorSettingsTemperature colorSettingsTemperature = new YandexAliceCapabilities.ColorSettingsTemperature();
+                                                    colorSettingsTemperature.setOhID(grpItem.getName());
+                                                    colorSettingsTemperature.setTemp(true);
+                                                    colset.setTemperatureK(colorSettingsTemperature);
+                                                }
+                                            });
+                                        }
                                     }
                                     if (capName.isEmpty()) {
-                                        yDev.addProperties(grpItem.getName(), YandexDevice.PROP_FLOAT, ref.instance,
-                                                ref.unit);
+                                        List<YandexAliceCapabilities> caps = yDev.getCapabilities();
+                                        if (caps.stream().noneMatch(temper -> temper.getTemperatureK().isTemp())) {
+                                            yDev.addProperties(grpItem.getName(), YandexDevice.PROP_FLOAT, ref.instance,
+                                                    ref.unit);
+                                        }
                                     } else {
                                         yDev.addCapabilities(grpItem.getName(), capName, ref.instance, ref.unit,
                                                 minRange, maxRange, precision);
@@ -820,12 +965,12 @@ public class YandexService implements EventSubscriber {
                                                     });
 
                                                 }
-                                                if (scenes.isEmpty()) {
-                                                    yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
-                                                            grpItem.getName());
-                                                } else {
-                                                    yDev.setSceneColorCapabilities(scenes, grpItem.getName());
-                                                }
+                                            }
+                                            if (scenes.isEmpty()) {
+                                                yDev.setSceneColorCapabilities(YandexDevice.SCENES_LIST,
+                                                        grpItem.getName());
+                                            } else {
+                                                yDev.setSceneColorCapabilities(scenes, grpItem.getName());
                                             }
                                         }
                                         if (YandexDevice.CAP_MODE.contains(tag.toLowerCase())) {
@@ -902,6 +1047,15 @@ public class YandexService implements EventSubscriber {
                                                             .withOptions(List.of(new StateOption("tilt", "tilt"),
                                                                     new StateOption("fall", "fall"),
                                                                     new StateOption("vibration", "vibration")))
+                                                            .build().toStateDescription());
+                                        } else if (tag.equalsIgnoreCase(YandexDevice.EVENT_BUTTON)) {
+                                            yDev.addProperties(grpItem.getName(), YandexDevice.PROP_EVENT,
+                                                    YandexDevice.EVENT_BUTTON, "");
+                                            ((StringItem) grpItem).setStateDescriptionService(
+                                                    (text, locale) -> StateDescriptionFragmentBuilder.create()
+                                                            .withOptions(List.of(new StateOption("click", "click"),
+                                                                    new StateOption("double_click", "double_click"),
+                                                                    new StateOption("long_press", "long_press")))
                                                             .build().toStateDescription());
                                         }
                                         if (setDefaultValues) {
@@ -1083,6 +1237,11 @@ public class YandexService implements EventSubscriber {
                                             Objects.requireNonNull(eventPublisher)
                                                     .post(ItemEventFactory.createCommandEvent(cp.getScenesOhID(),
                                                             StringType.valueOf(state.getString("value"))));
+                                        } else if ("temperature_k".equals(instance)) {
+                                            Objects.requireNonNull(eventPublisher)
+                                                    .post(ItemEventFactory.createCommandEvent(
+                                                            cp.getTemperatureK().getOhID(), DecimalType
+                                                                    .valueOf(String.valueOf(state.getInt("value")))));
                                         } else {
                                             JSONObject value = state.getJSONObject("value");
                                             Objects.requireNonNull(eventPublisher)
@@ -1091,8 +1250,22 @@ public class YandexService implements EventSubscriber {
                                                                     + value.get("v"))));
                                         }
                                     } else if (memItem instanceof DimmerItem) {
-                                        int value = state.getInt("value");
+                                        int value = 0;
+                                        boolean relative = false;
+                                        if (!state.isNull("relative")) {
+                                            relative = state.getBoolean("relative");
+                                        }
+                                        var itemState = memItem.getState().toString();
                                         String instance = state.getString("instance");
+                                        if (relative) {
+                                            int setValue = state.getInt("value");
+                                            value = Integer.parseInt(itemState) + setValue;
+                                            if (value <= 0) {
+                                                value = 0;
+                                            }
+                                        } else {
+                                            value = state.getInt("value");
+                                        }
                                         if (instance.equals(cp.getInstance())) {
                                             Objects.requireNonNull(eventPublisher)
                                                     .post(ItemEventFactory.createCommandEvent(cp.getOhID(),
@@ -1118,6 +1291,36 @@ public class YandexService implements EventSubscriber {
                                     } else if (memItem instanceof StringItem) {
                                         Objects.requireNonNull(eventPublisher).post(ItemEventFactory.createCommandEvent(
                                                 cp.getOhID(), StringType.valueOf(state.getString("value"))));
+                                    }
+                                } else if (cp.getOhID().isEmpty()) {
+                                    if (!memItem.hasTag("noyandex") && !memItem.hasTag("noYandex")) {
+                                        if (memItem instanceof ColorItem) {
+                                            String instance = state.getString("instance");
+                                            if ("hsv".equals(instance)) {
+                                                JSONObject value = state.getJSONObject("value");
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(
+                                                                cp.getColorModel().getOhID(),
+                                                                HSBType.valueOf(value.get("h") + "," + value.get("s")
+                                                                        + "," + value.get("v"))));
+                                            }
+                                        } else if (memItem instanceof NumberItem) {
+                                            String instance = state.getString("instance");
+                                            if ("temperature_k".equals(instance)) {
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(
+                                                                cp.getTemperatureK().getOhID(), DecimalType.valueOf(
+                                                                        String.valueOf(state.getInt("value")))));
+                                            }
+                                        } else if (memItem instanceof StringItem) {
+
+                                            String instance = state.getString("instance");
+                                            if ("scene".equals(instance)) {
+                                                Objects.requireNonNull(eventPublisher)
+                                                        .post(ItemEventFactory.createCommandEvent(cp.getScenesOhID(),
+                                                                StringType.valueOf(state.getString("value"))));
+                                            }
+                                        }
                                     }
                                 }
                             });
