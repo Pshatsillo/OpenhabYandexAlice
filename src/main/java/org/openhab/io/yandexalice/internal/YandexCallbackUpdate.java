@@ -50,7 +50,6 @@ public class YandexCallbackUpdate implements Runnable {
             yandexURL = URI
                     .create("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state")
                     .toURL();
-            ;
             con = (HttpURLConnection) yandexURL.openConnection();
             con.setConnectTimeout(1000);
             con.setReadTimeout(2000);
@@ -64,10 +63,17 @@ public class YandexCallbackUpdate implements Runnable {
             }
 
             int code = con.getResponseCode();
-            // Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code,
-                    con.getContent().toString());
-            // InputStream resp = con.getInputStream();
+            if (code == 400) {
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+                String result = response.toString().trim();
+                logger.error("Error json message: {}", result);
+            }
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
             String inputLine;
             StringBuilder response = new StringBuilder();
@@ -76,7 +82,7 @@ public class YandexCallbackUpdate implements Runnable {
             }
             in.close();
             String result = response.toString().trim();
-            logger.debug("input string from REST: {}", result);
+            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code, result);
         } catch (IOException e) {
             logger.error("ERROR {}", e.getMessage());
         }

@@ -382,6 +382,37 @@ public class YandexService implements EventSubscriber {
                                                     if (state instanceof StringType) {
                                                         eventJson.addCapabilityState(cap, item.getState());
                                                         changed = true;
+                                                    } else if (state instanceof HSBType) {
+                                                        state = new HSBType(new String(new StringBuilder(
+                                                                ((HSBType) state).getHue().intValue() + ","
+                                                                        + ((HSBType) state).getSaturation().intValue()
+                                                                        + "," + ((HSBType) state).getBrightness()
+                                                                                .intValue())));
+                                                        State st = cap.getState();
+                                                        if (st != null) {
+                                                            if (!st.equals(item.getState())) {
+                                                                eventJson.addCapabilityState(cap, state);
+                                                                cap.setState(state);
+                                                                changed = true;
+                                                            } else {
+                                                                changed = false;
+                                                            }
+                                                        }
+                                                    } else if (state instanceof PercentType) {
+                                                        State oldstate = cap.getState();
+                                                        if (oldstate != null) {
+                                                            HSBType hsb = new HSBType(
+                                                                    new String(new StringBuilder(
+                                                                            ((HSBType) oldstate).getHue().intValue()
+                                                                                    + ","
+                                                                                    + ((HSBType) oldstate)
+                                                                                            .getSaturation().intValue()
+                                                                                    + "," + state)));
+
+                                                            eventJson.addCapabilityState(cap, hsb);
+                                                            cap.setState(hsb);
+                                                            changed = true;
+                                                        }
                                                     } else if (state instanceof DecimalType) {
                                                         State st = cap.getTemperatureK().getState();
                                                         if (st != null) {
