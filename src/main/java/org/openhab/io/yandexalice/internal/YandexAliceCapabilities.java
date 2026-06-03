@@ -191,6 +191,7 @@ public class YandexAliceCapabilities {
         private boolean isModel;
         @Nullable
         private State state;
+        private boolean temperature_k = false;
 
         public String getOhID() {
             return ohID;
@@ -214,6 +215,14 @@ public class YandexAliceCapabilities {
 
         public void setState(State state) {
             this.state = state;
+        }
+
+        public void setTemp(boolean b) {
+            temperature_k = b;
+        }
+
+        public boolean getTemp() {
+            return temperature_k;
         }
     }
 }

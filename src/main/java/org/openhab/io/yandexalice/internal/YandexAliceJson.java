@@ -178,11 +178,23 @@ public class YandexAliceJson {
             // }
         } else if (state instanceof HSBType) {
             // log.debug("HSB");
-            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
-                    new JSONObject().put("instance", "hsv").put("value",
-                            new JSONObject().put("h", ((HSBType) state).getHue().intValue())
-                                    .put("s", ((HSBType) state).getSaturation().intValue())
-                                    .put("v", ((HSBType) state).getBrightness().intValue()))));
+            if (capability.instance.equals("brightness")) {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", capability.getInstance()).put("value",
+                                ((HSBType) state).getBrightness().intValue())));
+            }
+            if (capability.getCapabilityName().equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", "hsv").put("value",
+                                new JSONObject().put("h", ((HSBType) state).getHue().intValue())
+                                        .put("s", ((HSBType) state).getSaturation().intValue())
+                                        .put("v", ((HSBType) state).getBrightness().intValue()))));
+            }
+            if (capability.getCapabilityName().equals(YandexDevice.CAP_ON_OFF)) {
+                boolean status = ((HSBType) state).getBrightness().intValue() != 0;
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", capability.getInstance()).put("value", status)));
+            }
         } else if (state instanceof PercentType) {
             if (capability.getCapabilityName().equals(YandexDevice.CAP_ON_OFF)) {
                 boolean status = ((PercentType) state).intValue() > 0;

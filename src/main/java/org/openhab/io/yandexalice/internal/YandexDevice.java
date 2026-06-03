@@ -293,6 +293,18 @@ public class YandexDevice {
         capabilities.add(cp);
     }
 
+    public void addCapabilities(YandexAliceCapabilities.ColorSettingsModel colorSettingsModel) {
+        YandexAliceCapabilities cp = new YandexAliceCapabilities();
+        cp.addCapability(YandexDevice.CAP_COLOR_SETTINGS);
+        cp.setColorModel(colorSettingsModel);
+        if (colorSettingsModel.getTemp()) {
+            YandexAliceCapabilities.ColorSettingsTemperature temperature = new YandexAliceCapabilities.ColorSettingsTemperature();
+            temperature.setTemp(true);
+            cp.setTemperatureK(temperature);
+        }
+        capabilities.add(cp);
+    }
+
     public List<YandexAliceCapabilities> getCapabilities() {
         return capabilities;
     }
