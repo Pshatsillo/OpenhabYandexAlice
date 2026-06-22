@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/**
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -191,6 +191,8 @@ public class YandexAliceCapabilities {
         private boolean isModel;
         @Nullable
         private State state;
+        private boolean brightness = false;
+        private boolean temperature_k = false;
 
         public String getOhID() {
             return ohID;
@@ -214,6 +216,18 @@ public class YandexAliceCapabilities {
 
         public void setState(State state) {
             this.state = state;
+        }
+
+        public void setBrightness(boolean b) {
+            brightness = b;
+        }
+
+        public void setTemp(boolean b) {
+            temperature_k = b;
+        }
+
+        public boolean getTemp() {
+            return temperature_k;
         }
     }
 }

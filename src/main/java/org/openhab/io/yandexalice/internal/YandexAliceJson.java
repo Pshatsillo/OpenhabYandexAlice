@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/**
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -11,6 +11,9 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.io.yandexalice.internal;
+
+import static org.openhab.io.yandexalice.internal.YandexDevice.CAP_COLOR_SETTINGS;
+import static org.openhab.io.yandexalice.internal.YandexDevice.CAP_ON_OFF;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -81,7 +84,7 @@ public class YandexAliceJson {
                                                 .put("precision", cp.getPrecision()))
                                 .put("unit", cp.getUnit()))
                         .put("retrievable", true).put("reportable", true));
-            } else if (cp.capabilityName.equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+            } else if (cp.capabilityName.equals(CAP_COLOR_SETTINGS)) {
                 JSONObject colSetObj = new JSONObject();
                 JSONObject params = new JSONObject();
                 colSetObj.put("type", cp.getCapabilityName());
@@ -178,11 +181,23 @@ public class YandexAliceJson {
             // }
         } else if (state instanceof HSBType) {
             // log.debug("HSB");
-            caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
-                    new JSONObject().put("instance", "hsv").put("value",
-                            new JSONObject().put("h", ((HSBType) state).getHue().intValue())
-                                    .put("s", ((HSBType) state).getSaturation().intValue())
-                                    .put("v", ((HSBType) state).getBrightness().intValue()))));
+            if (capability.instance.equals("brightness")) {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", capability.getInstance()).put("value",
+                                ((HSBType) state).getBrightness().intValue())));
+            }
+            if (capability.getCapabilityName().equals(CAP_COLOR_SETTINGS)) {
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", "hsv").put("value",
+                                new JSONObject().put("h", ((HSBType) state).getHue().intValue())
+                                        .put("s", ((HSBType) state).getSaturation().intValue())
+                                        .put("v", ((HSBType) state).getBrightness().intValue()))));
+            }
+            if (capability.getCapabilityName().equals(CAP_ON_OFF)) {
+                boolean status = ((HSBType) state).getBrightness().intValue() != 0;
+                caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
+                        new JSONObject().put("instance", capability.getInstance()).put("value", status)));
+            }
         } else if (state instanceof PercentType) {
             if (capability.getCapabilityName().equals(YandexDevice.CAP_ON_OFF)) {
                 boolean status = ((PercentType) state).intValue() > 0;
@@ -201,7 +216,7 @@ public class YandexAliceJson {
                         .put("instance", capability.getInstance()).put("value", ((Number) state).doubleValue())));
             }
         } else if (state instanceof StringType) {
-            if (capability.getCapabilityName().equals(YandexDevice.CAP_COLOR_SETTINGS)) {
+            if (capability.getCapabilityName().equals(CAP_COLOR_SETTINGS)) {
                 caps.put(new JSONObject().put("type", capability.getCapabilityName()).put("state",
                         new JSONObject().put("instance", "scene").put("value", state.toString())));
             } else {

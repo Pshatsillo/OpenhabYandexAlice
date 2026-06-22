@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/**
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -290,6 +290,18 @@ public class YandexDevice {
         cp.addCapability(capability);
         cp.setOhID(ohID);
         cp.setColorModel(colorSettingsModel);
+        capabilities.add(cp);
+    }
+
+    public void addCapabilities(YandexAliceCapabilities.ColorSettingsModel colorSettingsModel) {
+        YandexAliceCapabilities cp = new YandexAliceCapabilities();
+        cp.addCapability(YandexDevice.CAP_COLOR_SETTINGS);
+        cp.setColorModel(colorSettingsModel);
+        if (colorSettingsModel.getTemp()) {
+            YandexAliceCapabilities.ColorSettingsTemperature temperature = new YandexAliceCapabilities.ColorSettingsTemperature();
+            temperature.setTemp(true);
+            cp.setTemperatureK(temperature);
+        }
         capabilities.add(cp);
     }
 

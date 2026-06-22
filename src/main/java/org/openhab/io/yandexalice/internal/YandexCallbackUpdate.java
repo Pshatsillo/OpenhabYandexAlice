@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+/**
+ * Copyright (c) 2010-2024 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -14,6 +14,7 @@ package org.openhab.io.yandexalice.internal;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -65,17 +66,30 @@ public class YandexCallbackUpdate implements Runnable {
 
             int code = con.getResponseCode();
             // Map<String, List<String>> headers = con.getHeaderFields();
-            logger.debug("Response: {}, code {}, content {}", con.getResponseMessage(), code, con.getContent().toString());
-            // InputStream resp = con.getInputStream();
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuilder response = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
+            if (code != 200 || code != 202) {
+                InputStream errStream = con.getErrorStream();
+                if (errStream != null) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+                    String result = response.toString().trim();
+                    logger.error("Response error: {}", result);
+                }
+            } else {
+                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+                String result = response.toString().trim();
+                logger.debug("input string from REST: {}", result);
             }
-            in.close();
-            String result = response.toString().trim();
-            logger.debug("input string from REST: {}", result);
         } catch (IOException e) {
             logger.error("ERROR {}", e.getMessage());
         }
