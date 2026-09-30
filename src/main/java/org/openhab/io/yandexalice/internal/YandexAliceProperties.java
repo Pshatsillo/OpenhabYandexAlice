@@ -14,9 +14,10 @@ package org.openhab.io.yandexalice.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.openhab.core.types.State;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * The {@link YandexAliceProperties} model for Yandex properties
@@ -25,75 +26,82 @@ import org.openhab.core.types.State;
  */
 @NonNullByDefault
 public class YandexAliceProperties {
+
     private String propName;
     private String instance;
     private String unit = "";
     private String ohItemID = "";
-    private JSONArray events = new JSONArray();
+    private JsonArray events = new JsonArray();
+
     @Nullable
     private State state = null;
+
+    private JsonObject createValueObj(String val) {
+        JsonObject o = new JsonObject();
+        o.addProperty("value", val);
+        return o;
+    }
 
     public YandexAliceProperties(String ohItemID, String propName, String instance, String unit) {
         this.propName = propName;
         this.instance = instance;
         this.unit = unit;
         this.ohItemID = ohItemID;
-        if (propName.equals(YandexDevice.PROP_EVENT)) {
-            switch (instance) {
-                case YandexDevice.EVENT_OPEN:
-                    events = new JSONArray().put(new JSONObject().put("value", "opened"))
-                            .put(new JSONObject().put("value", "closed"));
-                    break;
-                case YandexDevice.EVENT_MOTION:
-                    events = new JSONArray().put(new JSONObject().put("value", "detected"))
-                            .put(new JSONObject().put("value", "not_detected"));
-                    break;
-                case YandexDevice.EVENT_WATER_LEAK:
-                    events = new JSONArray().put(new JSONObject().put("value", "dry"))
-                            .put(new JSONObject().put("value", "leak"));
-                    break;
-                case YandexDevice.EVENT_SMOKE:
-                case YandexDevice.EVENT_GAS:
-                    events = new JSONArray().put(new JSONObject().put("value", "detected"))
-                            .put(new JSONObject().put("value", "not_detected"))
-                            .put(new JSONObject().put("value", "high"));
-                    break;
-                case YandexDevice.EVENT_BATTERY_LEVEL:
-                    events = new JSONArray().put(new JSONObject().put("value", "low"))
-                            .put(new JSONObject().put("value", "normal"));
-                    break;
-                case YandexDevice.EVENT_BUTTON:
-                    events = new JSONArray().put(new JSONObject().put("value", "click"))
-                            .put(new JSONObject().put("value", "double_click"))
-                            .put(new JSONObject().put("value", "long_press"));
-                    break;
-            }
-        }
-    }
 
-    public String getOhID() {
-        return ohItemID;
+        if (propName.equals(YandexDevice.PROP_EVENT)) {
+            initEvents(instance);
+        }
     }
 
     public YandexAliceProperties(String propName, String instance) {
         this.propName = propName;
         this.instance = instance;
+
         if (propName.equals(YandexDevice.PROP_EVENT)) {
-            switch (instance) {
-                case YandexDevice.EVENT_OPEN:
-                    events = new JSONArray().put(new JSONObject().put("value", "opened"))
-                            .put(new JSONObject().put("value", "closed"));
-                    break;
-                case YandexDevice.EVENT_MOTION:
-                    events = new JSONArray().put(new JSONObject().put("value", "detected"))
-                            .put(new JSONObject().put("value", "not_detected"));
-                    break;
-                case YandexDevice.EVENT_WATER_LEAK:
-                    events = new JSONArray().put(new JSONObject().put("value", "dry"))
-                            .put(new JSONObject().put("value", "leak"));
-                    break;
-            }
+            initEvents(instance);
         }
+    }
+
+    private void initEvents(String inst) {
+        switch (inst) {
+            case YandexDevice.EVENT_OPEN:
+                events = new JsonArray();
+                events.add(createValueObj("opened"));
+                events.add(createValueObj("closed"));
+                break;
+            case YandexDevice.EVENT_MOTION:
+                events = new JsonArray();
+                events.add(createValueObj("detected"));
+                events.add(createValueObj("not_detected"));
+                break;
+            case YandexDevice.EVENT_WATER_LEAK:
+                events = new JsonArray();
+                events.add(createValueObj("dry"));
+                events.add(createValueObj("leak"));
+                break;
+            case YandexDevice.EVENT_SMOKE:
+            case YandexDevice.EVENT_GAS:
+                events = new JsonArray();
+                events.add(createValueObj("detected"));
+                events.add(createValueObj("not_detected"));
+                events.add(createValueObj("high"));
+                break;
+            case YandexDevice.EVENT_BATTERY_LEVEL:
+                events = new JsonArray();
+                events.add(createValueObj("low"));
+                events.add(createValueObj("normal"));
+                break;
+            case YandexDevice.EVENT_BUTTON:
+                events = new JsonArray();
+                events.add(createValueObj("click"));
+                events.add(createValueObj("double_click"));
+                events.add(createValueObj("long_press"));
+                break;
+        }
+    }
+
+    public String getOhID() {
+        return ohItemID;
     }
 
     public String getPropName() {
@@ -108,7 +116,7 @@ public class YandexAliceProperties {
         return unit;
     }
 
-    public JSONArray getEvents() {
+    public JsonArray getEvents() {
         return events;
     }
 

@@ -16,9 +16,10 @@ import java.util.Collection;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.openhab.core.types.State;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 /**
  * The {@link YandexAliceCapabilities} model for Yandex capabilities
@@ -27,6 +28,7 @@ import org.openhab.core.types.State;
  */
 @NonNullByDefault
 public class YandexAliceCapabilities {
+
     String capabilityName = "";
     String instance;
     private String unit;
@@ -35,22 +37,27 @@ public class YandexAliceCapabilities {
     private int minRange;
     private String ohID;
     private String scenesOhID;
+
     @Nullable
     private State state = null;
-    JSONArray modes = new JSONArray();
-    JSONArray scenesList = new JSONArray();
-    // private JSONObject temperatureK = new JSONObject();
+
+    JsonArray modes = new JsonArray();
+    JsonArray scenesList = new JsonArray();
 
     private ColorSettingsTemperature temperatureK = new ColorSettingsTemperature();
     private ColorSettingsModel colorSettingsModel = new ColorSettingsModel();
 
-    public JSONArray getModes() {
+    public JsonArray getModes() {
         return modes;
     }
 
     public void setModes(Collection<String> modesList) {
-        JSONArray modes = new JSONArray();
-        modesList.forEach((md) -> modes.put(new JSONObject().put("value", md)));
+        JsonArray modes = new JsonArray();
+        modesList.forEach((md) -> {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("value", md);
+            modes.add(obj);
+        });
         this.modes = modes;
     }
 
@@ -121,21 +128,21 @@ public class YandexAliceCapabilities {
 
     public void setScenesList(Collection<String> scenesList) {
         scenesList.forEach((scn) -> {
-            this.scenesList.put(new JSONObject().put("id", scn));
+            JsonObject obj = new JsonObject();
+            obj.addProperty("id", scn);
+            this.scenesList.add(obj);
         });
     }
 
     public void setTemperatureK(ColorSettingsTemperature temperatureK) {
         this.temperatureK = temperatureK;
-        // temperatureK.setOhID(ohID);
-        // temperatureK.setTemp(true);
     }
 
     public ColorSettingsTemperature getTemperatureK() {
         return temperatureK;
     }
 
-    public JSONArray getScenesList() {
+    public JsonArray getScenesList() {
         return scenesList;
     }
 
