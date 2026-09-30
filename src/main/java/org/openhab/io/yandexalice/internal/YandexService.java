@@ -15,13 +15,7 @@ package org.openhab.io.yandexalice.internal;
 import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesConstants.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -32,6 +26,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.openhab.core.common.ThreadPoolManager;
+import org.openhab.core.common.registry.RegistryChangeListener;
 import org.openhab.core.config.core.ConfigurableService;
 import org.openhab.core.events.Event;
 import org.openhab.core.events.EventFilter;
@@ -95,7 +90,7 @@ import com.google.gson.JsonParser;
         EventSubscriber.class }, configurationPid = "org.openhab.yandexalice", property = Constants.SERVICE_PID
                 + "=org.openhab.yandexalice")
 @ConfigurableService(category = "io", label = "Yandex Alice", description_uri = YandexService.CONFIG_URI)
-public class YandexService implements EventSubscriber {
+public class YandexService implements EventSubscriber, RegistryChangeListener<Item> {
     protected static final String CONFIG_URI = "io:yandexalice";
     // private static final String CFG_TOKEN = "token";
     private static final String CFG_SKILLID = "skillID";
@@ -121,6 +116,7 @@ public class YandexService implements EventSubscriber {
             .getScheduledPool(ThreadPoolManager.THREAD_POOL_NAME_COMMON);
     @Nullable
     Thread updateAliceItemTread;
+    private @Nullable ScheduledFuture<?> notifyJob;
 
     @Activate
     public YandexService(final @Reference HttpClientFactory httpClientFactory,
@@ -142,6 +138,7 @@ public class YandexService implements EventSubscriber {
         getItemsList();
         // getDevicesList();
         uuid = Objects.requireNonNull(InstanceUUID.get());
+        itemRegistry.addRegistryChangeListener(this);
 
         ScheduledFuture<?> refreshPollingJob = this.refreshPollingJob;
         if (refreshPollingJob == null || refreshPollingJob.isCancelled()) {
@@ -1471,5 +1468,60 @@ public class YandexService implements EventSubscriber {
             this.refreshPollingJob = null;
         }
         yandexDevicesList.clear();
+
+        ItemRegistry itemRegistry = this.itemRegistry;
+        if (itemRegistry != null) {
+            Objects.requireNonNull(itemRegistry).removeRegistryChangeListener(this);
+        }
+        ScheduledFuture<?> nj = this.notifyJob;
+        if (nj != null) {
+            nj.cancel(true);
+            this.notifyJob = null;
+        }
+    }
+
+    // Push new item to yandex
+
+    @Override
+    public void added(Item item) {
+        if (item.hasTag("Yandex")) {
+            logger.info("New Yandex device detected: {}", item.getName());
+            scheduleYandexNotification();
+        }
+    }
+
+    @Override
+    public void removed(Item item) {
+        if (item.hasTag("Yandex") || yandexDevicesList.containsKey(item.getName())) {
+            logger.info("Yandex device removed: {}", item.getName());
+            yandexDevicesList.remove(item.getName());
+            scheduleYandexNotification();
+        }
+    }
+
+    @Override
+    public void updated(Item oldItem, Item item) {
+        // Если изменились теги или label, тоже уведомляем Алису
+        if (item.hasTag("Yandex") || oldItem.hasTag("Yandex")) {
+            scheduleYandexNotification();
+        }
+    }
+
+    /**
+     * Планирует отправку списка устройств с задержкой 3 секунды.
+     * Если за это время добавится еще одно устройство, таймер сбросится.
+     */
+    private void scheduleYandexNotification() {
+        ScheduledFuture<?> currentJob = this.notifyJob;
+        if (currentJob != null) {
+            currentJob.cancel(false);
+        }
+        this.notifyJob = scheduler.schedule(() -> {
+            logger.debug("Generating full device list for Yandex State Reporting...");
+            // Формируем актуальный список всех устройств
+            String payload = getItemsList(UUID.randomUUID().toString());
+            // Отправляем его через уже готовый механизм
+            updateCallback(payload);
+        }, 3, TimeUnit.SECONDS);
     }
 }
