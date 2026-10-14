@@ -172,6 +172,7 @@ public class YandexAliceJson {
         deviceObj.addProperty("type", yDev.getType());
         deviceObj.add("capabilities", new JsonArray());
         deviceObj.add("properties", new JsonArray());
+        deviceObj.addProperty("room", "Test");
         returnRequest.getAsJsonObject("payload").getAsJsonArray("devices").add(deviceObj);
     }
 

@@ -401,9 +401,9 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
 
     private void updateCallback(String json) {
         YandexCallbackUpdate updateAliceItem = new YandexCallbackUpdate(json);
+        this.updateAliceItemTread = new Thread(updateAliceItem);
         Thread updateAliceItemTread = this.updateAliceItemTread;
         if (updateAliceItemTread != null) {
-            updateAliceItemTread = new Thread(updateAliceItem);
             updateAliceItemTread.start();
         }
     }
@@ -1469,9 +1469,9 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         }
         yandexDevicesList.clear();
 
-        ItemRegistry itemRegistry = this.itemRegistry;
+        ItemRegistry itemRegistry = YandexService.itemRegistry;
         if (itemRegistry != null) {
-            Objects.requireNonNull(itemRegistry).removeRegistryChangeListener(this);
+            itemRegistry.removeRegistryChangeListener(this);
         }
         ScheduledFuture<?> nj = this.notifyJob;
         if (nj != null) {
@@ -1517,11 +1517,9 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
             currentJob.cancel(false);
         }
         this.notifyJob = scheduler.schedule(() -> {
-            logger.debug("Generating full device list for Yandex State Reporting...");
-            // Формируем актуальный список всех устройств
-            String payload = getItemsList(UUID.randomUUID().toString());
-            // Отправляем его через уже готовый механизм
-            updateCallback(payload);
+            logger.info("Triggering Yandex Discovery for new/removed devices...");
+            // Отправляем "пинг" Яндексу, чтобы он сам запросил новый список устройств
+            scheduler.execute(new YandexDiscoveryUpdate(uuid));
         }, 3, TimeUnit.SECONDS);
     }
 }
