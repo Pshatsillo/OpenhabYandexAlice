@@ -127,6 +127,7 @@ public class YandexAliceCapabilities {
     }
 
     public void setScenesList(Collection<String> scenesList) {
+        this.scenesList = new JsonArray();
         scenesList.forEach((scn) -> {
             JsonObject obj = new JsonObject();
             obj.addProperty("id", scn);
