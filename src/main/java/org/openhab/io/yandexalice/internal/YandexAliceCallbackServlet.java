@@ -34,8 +34,10 @@ import org.slf4j.LoggerFactory;
 public class YandexAliceCallbackServlet extends HttpServlet {
     private static final long serialVersionUID = -2725161358635927815L;
     private final Logger logger = LoggerFactory.getLogger(YandexAliceCallbackServlet.class);
+    private final YandexService yandexService;
 
-    public YandexAliceCallbackServlet() {
+    public YandexAliceCallbackServlet(YandexService yandexService) {
+        this.yandexService = yandexService;
     }
 
     @Override
@@ -43,7 +45,7 @@ public class YandexAliceCallbackServlet extends HttpServlet {
         logger.debug("Get servlet: {}", req.getPathInfo());
         resp.setContentType(MediaType.APPLICATION_JSON);
         resp.setCharacterEncoding("utf-8");
-        resp.getWriter().print(YandexService.getItemsList(req.getHeader("X-Request-Id")));
+        resp.getWriter().print(yandexService.getItemsList(req.getHeader("X-Request-Id")));
         resp.setStatus(HttpServletResponse.SC_OK);
     }
 
@@ -63,10 +65,10 @@ public class YandexAliceCallbackServlet extends HttpServlet {
             String reqUri = req.getRequestURI();
             if (("/yandex/v1.0/user/devices/query").equals(reqUri)) {
                 logger.debug("Requesting item state from Yandex: {}", body);
-                answer = YandexService.getItemState(body, req.getHeader("X-Request-Id"));
+                answer = yandexService.getItemState(body, req.getHeader("X-Request-Id"));
             } else if (("/yandex/v1.0/user/devices/action").equals(reqUri)) {
                 logger.debug("Action item from Yandex: {}", body);
-                answer = YandexService.setItemState(body, req.getHeader("X-Request-Id"));
+                answer = yandexService.setItemState(body, req.getHeader("X-Request-Id"));
             }
         }
         resp.setContentType(MediaType.APPLICATION_JSON);

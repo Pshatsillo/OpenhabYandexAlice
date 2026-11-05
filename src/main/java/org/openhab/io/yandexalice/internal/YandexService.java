@@ -16,6 +16,7 @@ import static org.openhab.io.yandexalice.internal.constants.YandexAliceDevicesCo
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -95,23 +96,21 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
     // private static final String CFG_TOKEN = "token";
     private static final String CFG_SKILLID = "skillID";
     private static final String CFG_OAUTH = "oauth";
-    private static @Nullable ThingRegistry things;
-    private static @Nullable ItemChannelLinkRegistry link;
+    private final @Nullable ThingRegistry things;
+    private final @Nullable ItemChannelLinkRegistry link;
     private final Logger logger = LoggerFactory.getLogger(YandexService.class);
     private final HttpClient httpClient;
-    protected static @Nullable ItemRegistry itemRegistry;
-    protected static @Nullable EventPublisher eventPublisher;
+    protected final @Nullable ItemRegistry itemRegistry;
+    protected final @Nullable EventPublisher eventPublisher;
     private final @NonNullByDefault({}) YandexAliceCallbackServlet yandexHTTPCallback;
     private final HttpService httpService;
     // private final HashMap<String, String> yandexId = new HashMap<>();
-    private static boolean action;
+    private boolean action;
     // private String yandexToken = "";
     private final YandexAliceCredits credit = new YandexAliceCredits();
-    private static String uuid = "";
-    private static final HashMap<String, YandexDevice> yandexDevicesList = new HashMap<>();
+    private final String uuid;
+    private final Map<String, YandexDevice> yandexDevicesList = new ConcurrentHashMap<>();
     private @Nullable ScheduledFuture<?> refreshPollingJob;
-    public static List<String> devicesList = new ArrayList<>();
-    private int devRefreshTime = 0;
     protected final ScheduledExecutorService scheduler = ThreadPoolManager
             .getScheduledPool(ThreadPoolManager.THREAD_POOL_NAME_COMMON);
     private final YandexCallbackUpdate yandexCallbackUpdate;
@@ -131,14 +130,14 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
 
         this.yandexCallbackUpdate = new YandexCallbackUpdate(this.httpClient, credit);
 
-        yandexHTTPCallback = new YandexAliceCallbackServlet();
-        YandexService.itemRegistry = itemRegistry;
-        YandexService.eventPublisher = eventPublisher;
-        YandexService.things = things;
-        YandexService.link = link;
+        yandexHTTPCallback = new YandexAliceCallbackServlet(this);
+        this.itemRegistry = itemRegistry;
+        this.eventPublisher = eventPublisher;
+        this.things = things;
+        this.link = link;
+        this.uuid = Objects.requireNonNull(InstanceUUID.get());
         getItemsList();
         // getDevicesList();
-        uuid = Objects.requireNonNull(InstanceUUID.get());
         itemRegistry.addRegistryChangeListener(this);
 
         ScheduledFuture<?> refreshPollingJob = this.refreshPollingJob;
@@ -147,17 +146,8 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         }
     }
 
-    private static void getDevicesList() {
-    }
-
     private void refresh() {
         logger.debug("refreshing...");
-        if (devRefreshTime == 60) {
-            getDevicesList();
-            devRefreshTime = 0;
-        } else {
-            devRefreshTime++;
-        }
         YandexAliceJson eventJson = new YandexAliceJson((double) System.currentTimeMillis() / 1000L, uuid);
         if (itemRegistry != null) {
             Collection<Item> itemsList = Objects.requireNonNull(itemRegistry).getItems();
@@ -404,8 +394,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         yandexCallbackUpdate.send(json);
     }
 
-    public static String getItemState(String json, @Nullable String header) {
-        Logger logger = LoggerFactory.getLogger(YandexService.class);
+    public String getItemState(String json, @Nullable String header) {
         YandexAliceJson aliceJson = new YandexAliceJson(Objects.requireNonNull(header));
         try {
             JsonObject parseItem = JsonParser.parseString(json).getAsJsonObject();
@@ -509,8 +498,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         return aliceJson.toString();
     }
 
-    public static String getItemsList(@Nullable String header) {
-        final Logger logger = LoggerFactory.getLogger(YandexService.class);
+    public String getItemsList(@Nullable String header) {
         if (itemRegistry != null) {
             Collection<Item> itemsList = Objects.requireNonNull(itemRegistry).getItems();
             YandexAliceJson json = new YandexAliceJson(Objects.requireNonNull(header));
@@ -1139,8 +1127,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         return "";
     }
 
-    public static String setItemState(String json, @Nullable String header) {
-        final Logger logger = LoggerFactory.getLogger(YandexService.class);
+    public String setItemState(String json, @Nullable String header) {
         action = true;
         JsonObject answer = new JsonObject();
         JsonObject payload = new JsonObject();
@@ -1228,7 +1215,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         return answer.toString();
     }
 
-    private static String publishState(String id, Item item, JsonObject state, String type) {
+    private String publishState(String id, Item item, JsonObject state, String type) {
         try {
             if (item instanceof ColorItem) {
                 YandexDevice yaDev = yandexDevicesList.get(id);
@@ -1465,9 +1452,9 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         }
         yandexDevicesList.clear();
 
-        ItemRegistry itemRegistry = YandexService.itemRegistry;
-        if (itemRegistry != null) {
-            itemRegistry.removeRegistryChangeListener(this);
+        ItemRegistry registry = this.itemRegistry;
+        if (registry != null) {
+            registry.removeRegistryChangeListener(this);
         }
         ScheduledFuture<?> nj = this.notifyJob;
         if (nj != null) {
