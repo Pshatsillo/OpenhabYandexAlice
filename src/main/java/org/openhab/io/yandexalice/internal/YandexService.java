@@ -114,8 +114,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
     private int devRefreshTime = 0;
     protected final ScheduledExecutorService scheduler = ThreadPoolManager
             .getScheduledPool(ThreadPoolManager.THREAD_POOL_NAME_COMMON);
-    @Nullable
-    Thread updateAliceItemTread;
+    private final YandexCallbackUpdate yandexCallbackUpdate;
     private @Nullable ScheduledFuture<?> notifyJob;
 
     @Activate
@@ -129,6 +128,8 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         this.httpClient.setMaxConnectionsPerDestination(200);
         this.httpClient.setConnectTimeout(30000);
         this.httpClient.setFollowRedirects(false);
+
+        this.yandexCallbackUpdate = new YandexCallbackUpdate(this.httpClient, credit);
 
         yandexHTTPCallback = new YandexAliceCallbackServlet();
         YandexService.itemRegistry = itemRegistry;
@@ -400,12 +401,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
     }
 
     private void updateCallback(String json) {
-        YandexCallbackUpdate updateAliceItem = new YandexCallbackUpdate(json);
-        this.updateAliceItemTread = new Thread(updateAliceItem);
-        Thread updateAliceItemTread = this.updateAliceItemTread;
-        if (updateAliceItemTread != null) {
-            updateAliceItemTread.start();
-        }
+        yandexCallbackUpdate.send(json);
     }
 
     public static String getItemState(String json, @Nullable String header) {
@@ -1519,7 +1515,7 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         this.notifyJob = scheduler.schedule(() -> {
             logger.info("Triggering Yandex Discovery for new/removed devices...");
             // Отправляем "пинг" Яндексу, чтобы он сам запросил новый список устройств
-            scheduler.execute(new YandexDiscoveryUpdate(uuid));
+            scheduler.execute(new YandexDiscoveryUpdate(credit, uuid));
         }, 3, TimeUnit.SECONDS);
     }
 }

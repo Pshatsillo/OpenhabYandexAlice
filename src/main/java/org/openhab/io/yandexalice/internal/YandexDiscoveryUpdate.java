@@ -36,11 +36,12 @@ import com.google.gson.JsonObject;
  */
 @NonNullByDefault
 public class YandexDiscoveryUpdate implements Runnable {
-    private final YandexAliceCredits credit = new YandexAliceCredits();
+    private final YandexAliceCredits credit;
     private final Logger logger = LoggerFactory.getLogger(YandexDiscoveryUpdate.class);
     private final String userId;
 
-    public YandexDiscoveryUpdate(String userId) {
+    public YandexDiscoveryUpdate(YandexAliceCredits credit, String userId) {
+        this.credit = credit;
         this.userId = userId;
     }
 

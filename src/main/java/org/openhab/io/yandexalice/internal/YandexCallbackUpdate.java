@@ -12,17 +12,16 @@
  */
 package org.openhab.io.yandexalice.internal;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Result;
+import org.eclipse.jetty.client.util.BufferingResponseListener;
+import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,67 +32,47 @@ import org.slf4j.LoggerFactory;
  *
  */
 @NonNullByDefault
-public class YandexCallbackUpdate implements Runnable {
-    private final YandexAliceCredits credit = new YandexAliceCredits();
-    private final Logger logger = LoggerFactory.getLogger(YandexCallbackUpdate.class);
-    String json;
+public class YandexCallbackUpdate {
 
-    public YandexCallbackUpdate(String json) {
-        this.json = json;
+    private static final int CONNECT_TIMEOUT_SECONDS = 5;
+
+    private final YandexAliceCredits credit;
+    private final Logger logger = LoggerFactory.getLogger(YandexCallbackUpdate.class);
+    private final HttpClient httpClient;
+
+    public YandexCallbackUpdate(HttpClient httpClient, YandexAliceCredits credit) {
+        this.httpClient = httpClient;
+        this.credit = credit;
     }
 
-    @Override
-    public void run() {
-        logger.debug("UpdateCallback running, json is {}", json);
-        HttpURLConnection con;
-        URL yandexURL;
+    public void send(String json) {
+        String url = "https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state";
+        logger.debug("UpdateCallback sending, json is {}", json);
         try {
-            yandexURL = URI
-                    .create("https://dialogs.yandex.net/api/v1/skills/" + credit.getSkillID() + "/callback/state")
-                    .toURL();
-            ;
-            con = (HttpURLConnection) yandexURL.openConnection();
-            con.setConnectTimeout(1000);
-            con.setReadTimeout(2000);
-            con.setRequestMethod("POST");
-            con.setRequestProperty("Authorization", "OAuth " + credit.getoAuth());
-            con.setRequestProperty("Content-Type", "application/json");
-            con.setDoOutput(true);
-            try (OutputStream os = con.getOutputStream()) {
-                byte[] input = json.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
-            }
-
-            int code = con.getResponseCode();
-            // Map<String, List<String>> headers = con.getHeaderFields();
-            if ((code != 200) && (code != 202)) {
-                InputStream errStream = con.getErrorStream();
-                if (errStream != null) {
-                    BufferedReader in = new BufferedReader(new InputStreamReader(con.getErrorStream()));
-                    String inputLine;
-                    StringBuilder response = new StringBuilder();
-                    while ((inputLine = in.readLine()) != null) {
-                        response.append(inputLine);
-                    }
-                    in.close();
-                    String result = response.toString().trim();
-                    logger.error("Response error: {}", result);
-                } else {
-                    logger.error("Response code: {}", code);
-                }
-            } else {
-                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                String inputLine;
-                StringBuilder response = new StringBuilder();
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-                in.close();
-                String result = response.toString().trim();
-                logger.debug("input string from REST: {}", result);
-            }
-        } catch (IOException e) {
-            logger.error("ERROR {}", e.getMessage());
+            httpClient.newRequest(url).method(HttpMethod.POST)
+                    .header(HttpHeader.AUTHORIZATION, "OAuth " + credit.getoAuth())
+                    .header(HttpHeader.CONTENT_TYPE, "application/json")
+                    .content(new StringContentProvider("application/json", json, StandardCharsets.UTF_8))
+                    .timeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS).send(new BufferingResponseListener() {
+                        @Override
+                        public void onComplete(Result result) {
+                            if (result.isFailed()) {
+                                Throwable failure = result.getFailure();
+                                logger.error("Callback request failed: {}",
+                                        failure != null ? failure.getMessage() : "unknown error");
+                                return;
+                            }
+                            int status = result.getResponse().getStatus();
+                            String body = this.getContentAsString(StandardCharsets.UTF_8);
+                            if (status != 200 && status != 202) {
+                                logger.error("Response error: {} {}", status, body);
+                            } else {
+                                logger.debug("input string from REST: {}", body);
+                            }
+                        }
+                    });
+        } catch (Exception e) {
+            logger.error("ERROR sending callback: {}", e.getMessage());
         }
     }
 }
