@@ -1,0 +1,3 @@
+[submodule "private-src"]
+	path = private-src
+	url = https://github.com/Pshatsillo/YandexAliceCredit.git

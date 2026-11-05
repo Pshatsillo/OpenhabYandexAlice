@@ -1,6 +1,5 @@
 /target/
 src/main/history/dependencies.xml
 org.openhab.io.yandexalice.iml
-/src/main/java/org/openhab/io/yandexalice/internal/YandexAliceCredits.java
 licenses/
 /.idea/
