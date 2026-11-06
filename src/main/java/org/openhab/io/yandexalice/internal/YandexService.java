@@ -127,6 +127,11 @@ public class YandexService implements EventSubscriber, RegistryChangeListener<It
         this.httpClient.setMaxConnectionsPerDestination(200);
         this.httpClient.setConnectTimeout(30000);
         this.httpClient.setFollowRedirects(false);
+        try {
+            this.httpClient.start();
+        } catch (Exception e) {
+            logger.error("Cannot start HTTP client: {}", e.getMessage());
+        }
 
         this.yandexCallbackUpdate = new YandexCallbackUpdate(this.httpClient, credit);
 
